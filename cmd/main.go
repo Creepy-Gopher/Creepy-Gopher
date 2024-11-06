@@ -6,38 +6,43 @@ import (
 	"fmt"
 	"log"
 	"os"
-	// "terminalpathservice/config"
-	// "terminalpathservice/service"
+	"sync"
 )
 
-var configPath = flag.String("config", "", "configuration path")
+var configPath = flag.String("config", ".env", "path to the configuration file")
 
 func main() {
 	cfg := readConfig()
 
-	fmt.Println(cfg)
+	fmt.Printf("Loaded Configuration: %+v\n", cfg)
+
+	// Initialize your application components here
+	// For example, you might want to create a crawler and a Telegram bot instance
 	// app, err := service.NewAppContainer(cfg)
 	// if err != nil {
-	// 	log.Fatal(err)
+	//     log.Fatal(err)
 	// }
 
-	// var wg sync.WaitGroup
-	// wg.Add(3)
+	var wg sync.WaitGroup
+	wg.Add(2) // Adjust the number of goroutines based on your needs
 
-	// go func() {
-	// 	defer wg.Done()
-	// 	http_server.Run(cfg, app)
-	// }()
+	// Start the property crawler
+	go func() {
+		defer wg.Done()
+		runCrawler(cfg) // This function should implement your crawling logic
+	}()
 
-	// go func() {
-	// 	defer wg.Done()
-	// 	grpc_server.Run(cfg, app)
-	// }()
+	// Start the Telegram bot
+	go func() {
+		defer wg.Done()
+		runTelegramBot(cfg) // This function should implement your Telegram bot logic
+	}()
 
-	// wg.Wait()
+	wg.Wait() // Wait for all goroutines to finish
 }
 
-func readConfig() config.Config {
+// readConfig reads the configuration from the specified path
+func readConfig() *config.Config {
 	flag.Parse()
 
 	if cfgPathEnv := os.Getenv("APP_CONFIG_PATH"); len(cfgPathEnv) > 0 {
@@ -48,11 +53,19 @@ func readConfig() config.Config {
 		log.Fatal("configuration file not found")
 	}
 
-	cfg, err := config.ReadStandard(*configPath)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	cfg := config.NewConfig() // Initialize the config directly from environment variables
 
 	return cfg
+}
+
+// runCrawler starts the property crawler using the provided configuration
+func runCrawler(cfg *config.Config) {
+	fmt.Println("Starting property crawler...")
+	// Implement your crawling logic here using cfg
+}
+
+// runTelegramBot starts the Telegram bot using the provided configuration
+func runTelegramBot(cfg *config.Config) {
+	fmt.Println("Starting Telegram bot...")
+	// Implement your Telegram bot logic here using cfg
 }
