@@ -21,6 +21,10 @@ go.work.sum
 # Environment files
 .env
 
+
+# vscode settings
+.vscode
+
 # Logs and debug files
 *.log
 *.log.*
@@ -57,3 +61,4 @@ coverage.out
 # Local development & system files
 .DS_Store
 Thumbs.db
+
