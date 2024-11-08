@@ -1,15 +1,8 @@
 package entities
 
-import (
-	"gorm.io/gorm"
-)
-
 type User struct {
-	gorm.Model
-	UserName  string
+	Model
+	UserName  string `gorm:"uniqueIndex"`
 	Role      string
 	IsPremium bool
-
-	// Relationships
-	// Bookmarks []Bookmark
 }

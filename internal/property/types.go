@@ -1,7 +1,26 @@
-package entities
+package property
+
+import (
+	"context"
+	"errors"
+
+	"github.com/google/uuid"
+)
+
+var (
+	ErrSomeThing = errors.New("some error")
+)
+
+type Repo interface {
+	Insert(ctx context.Context, p *Property) error
+	DeleteByID(ctx context.Context, id *uuid.UUID) error
+	UpdateByID(ctx context.Context, id *uuid.UUID, updates map[string]interface{}) error
+	// ...
+}
 
 type Property struct {
-	Model
+	ID uuid.UUID
+
 	Title        string
 	Description  string
 	BuyPrice     uint64
@@ -25,5 +44,5 @@ type Property struct {
 	Longitude    float64
 	Source       string
 	URL          string
-	Images       []string `gorm:"type:json"` // JSON array
+	Images       []string
 }

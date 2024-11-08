@@ -1,30 +1,28 @@
 package entities
 
-import (
-	"gorm.io/gorm"
-)
-
-type FilterSet struct {
-	gorm.Model
-	PriceRangeMin     float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	PriceRangeMax     float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	AreaRangeMin      float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	AreaRangeMax      float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	RoomMin           int     `gorm:"uniqueIndex:idx_filterset_all"`
-	RoomMax           int     `gorm:"uniqueIndex:idx_filterset_all"`
-	Cities            string  `gorm:"uniqueIndex:idx_filterset_all"`
-	Districts         string  `gorm:"uniqueIndex:idx_filterset_all"`
-	PropertyType      string  `gorm:"uniqueIndex:idx_filterset_all"`
-	DealingType       string  `gorm:"uniqueIndex:idx_filterset_all"`
-	FloorRangeMin     int     `gorm:"uniqueIndex:idx_filterset_all"`
-	FloorRangeMax     int     `gorm:"uniqueIndex:idx_filterset_all"`
-	HasElevator       bool    `gorm:"uniqueIndex:idx_filterset_all"`
-	HasStorage        bool    `gorm:"uniqueIndex:idx_filterset_all"`
-	BuildYearRangeMin int     `gorm:"uniqueIndex:idx_filterset_all"`
-	BuildYearRangeMax int     `gorm:"uniqueIndex:idx_filterset_all"`
-	LocationLatitude  float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	LocationLongitude float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	LocationRadius    float64 `gorm:"uniqueIndex:idx_filterset_all"`
-	CreatedAfter      string  `gorm:"uniqueIndex:idx_filterset_all"`
-	Sources           string  `gorm:"uniqueIndex:idx_filterset_all"`
+type Filter struct {
+	Model
+	BuyPriceMin       uint64   `gorm:"uniqueIndex:idx_filterset_all"`
+	BuyPriceMax       uint64   `gorm:"uniqueIndex:idx_filterset_all"`
+	RentPriceMin      uint64   `gorm:"uniqueIndex:idx_filterset_all"`
+	RentPriceMax      uint64   `gorm:"uniqueIndex:idx_filterset_all"`
+	AreaMin           uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	AreaMax           uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	RoomMin           uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	RoomMax           uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	FloorMin          uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	FloorMax          uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	BuildYearMin      uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	BuildYearMax      uint     `gorm:"uniqueIndex:idx_filterset_all"`
+	Cities            []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
+	Districts         []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
+	PropertyType      string   `gorm:"uniqueIndex:idx_filterset_all"`
+	DealingType       string   `gorm:"uniqueIndex:idx_filterset_all"`
+	HasElevator       bool     `gorm:"uniqueIndex:idx_filterset_all"`
+	HasStorage        bool     `gorm:"uniqueIndex:idx_filterset_all"`
+	LocationLatitude  float64  `gorm:"uniqueIndex:idx_filterset_all"`
+	LocationLongitude float64  `gorm:"uniqueIndex:idx_filterset_all"`
+	LocationRadius    float64  `gorm:"uniqueIndex:idx_filterset_all"`
+	CreatedAfter      string   `gorm:"uniqueIndex:idx_filterset_all"`
+	Sources           []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
 }
