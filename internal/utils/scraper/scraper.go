@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"creepy/internal/property"
+	"creepy/internal/utils/converter"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/playwright-community/playwright-go"
@@ -71,9 +72,14 @@ func ScrapePropertyData(url string, linkType LinkType) (*property.Property, erro
 		URL:          "",
 		Images:       nil,
 	}
+	if propertyType != "" {
+		resultProperty.Type = propertyType
+	}
 
 	for field, selector := range selectors {
-		content, err := page.TextContent(selector)
+		element, err := page.QuerySelector(selector)
+		content, _ := element.InnerText()
+		content = converter.ReplacePersianDigits(content)
 		if err == nil {
 			switch field {
 			case "Title":
@@ -96,8 +102,26 @@ func ScrapePropertyData(url string, linkType LinkType) (*property.Property, erro
 					resultProperty.Rooms = uint(num)
 				}
 			case "City":
+				//TODO: Fix &zwnj
 				resultProperty.City = content
-
+			case "BuildYear":
+				num, err := strconv.ParseUint(content, 10, 64)
+				if err != nil {
+					resultProperty.BuyPrice = num
+				}
+			case "Floor":
+				parts := strings.Split(string(content), " از ")
+				num, err := strconv.ParseUint(parts[0], 10, 0)
+				if err != nil {
+					resultProperty.Rooms = uint(num)
+				}
+			case "HasElevator":
+				resultProperty.HasElevator = !strings.Contains(content, "ندارد")
+			case "HasStorage":
+				resultProperty.HasStorage = !strings.Contains(content, "ندارد")
+			case "Images":
+				src, _ := element.GetAttribute("src")
+				resultProperty.Images = []string{src}
 			}
 		}
 
