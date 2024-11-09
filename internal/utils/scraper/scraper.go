@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/playwright-community/playwright-go"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,8 +19,24 @@ const (
 	LinkType_Divar_Rent LinkType = "Divar_Rent"
 )
 
+func PrintStructFields(s interface{}) {
+	val := reflect.ValueOf(s)
+	typ := val.Type()
+
+	if typ.Kind() != reflect.Struct {
+		fmt.Println("Provided value is not a struct")
+		return
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		value := val.Field(i)
+		fmt.Printf("%s: %v\n", field.Name, value)
+	}
+}
+
 func ScrapePropertyData(url string, linkType LinkType) (*property.Property, error) {
-	parts := strings.Split(string(linkType), "-")
+	parts := strings.Split(string(linkType), "_")
 	platform := parts[0]
 	propertyType := parts[1]
 	selectors := Selectors[platform][propertyType]
@@ -66,20 +83,29 @@ func ScrapePropertyData(url string, linkType LinkType) (*property.Property, erro
 		Floor:        0,
 		HasElevator:  false,
 		HasStorage:   false,
+		HasParking:   false,
 		Latitude:     0,
 		Longitude:    0,
 		Source:       "",
 		URL:          "",
 		Images:       nil,
 	}
+
 	if propertyType != "" {
 		resultProperty.Type = propertyType
+	} else {
+		//TODO: Sheypoor
 	}
 
+	resultProperty.Source = platform
+	resultProperty.URL = url
+
 	for field, selector := range selectors {
-		element, err := page.QuerySelector(selector)
-		content, _ := element.InnerText()
+		element, _ := page.QuerySelector(selector)
+		content, err := element.InnerHTML()
 		content = converter.ReplacePersianDigits(content)
+		//fmt.Println(field)
+		//fmt.Println(content)
 		if err == nil {
 			switch field {
 			case "Title":
@@ -88,37 +114,39 @@ func ScrapePropertyData(url string, linkType LinkType) (*property.Property, erro
 				resultProperty.Description = content
 			case "BuyPrice":
 				num, err := strconv.ParseUint(regexp.MustCompile(`[٬ تومان]`).ReplaceAllString(content, ""), 10, 64)
-				if err != nil {
+				if err == nil {
 					resultProperty.BuyPrice = num
 				}
 			case "Area":
 				num, err := strconv.ParseUint(content, 10, 64)
-				if err != nil {
+				if err == nil {
 					resultProperty.Area = num
 				}
 			case "Rooms":
 				num, err := strconv.ParseUint(content, 10, 0)
-				if err != nil {
+				if err == nil {
 					resultProperty.Rooms = uint(num)
 				}
 			case "City":
-				//TODO: Fix &zwnj
-				resultProperty.City = content
+				resultProperty.City = strings.Split(strings.Split(content, "،")[0], " در ")[1]
+				resultProperty.District = strings.Split(content, "، ")[1]
 			case "BuildYear":
 				num, err := strconv.ParseUint(content, 10, 64)
-				if err != nil {
-					resultProperty.BuyPrice = num
+				if err == nil {
+					resultProperty.BuildYear = uint(num)
 				}
 			case "Floor":
 				parts := strings.Split(string(content), " از ")
 				num, err := strconv.ParseUint(parts[0], 10, 0)
-				if err != nil {
-					resultProperty.Rooms = uint(num)
+				if err == nil {
+					resultProperty.Floor = uint(num)
 				}
 			case "HasElevator":
 				resultProperty.HasElevator = !strings.Contains(content, "ندارد")
 			case "HasStorage":
 				resultProperty.HasStorage = !strings.Contains(content, "ندارد")
+			case "HasParking":
+				resultProperty.HasParking = !strings.Contains(content, "ندارد")
 			case "Images":
 				src, _ := element.GetAttribute("src")
 				resultProperty.Images = []string{src}
@@ -126,6 +154,6 @@ func ScrapePropertyData(url string, linkType LinkType) (*property.Property, erro
 		}
 
 	}
-	fmt.Println(resultProperty)
+	PrintStructFields(resultProperty)
 	return &resultProperty, nil
 }
