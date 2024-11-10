@@ -25,5 +25,5 @@ type Property struct {
 	Longitude    float64
 	Source       string
 	URL          string
-	Images       []string `gorm:"type:json"` // JSON array
+	Images       []string `gorm:"type:text[]"`
 }
