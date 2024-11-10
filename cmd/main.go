@@ -2,7 +2,7 @@ package main
 
 import (
 	"creepy/internal/service"
-	"creepy/internal/storage/mysql"
+	"creepy/internal/storage/postgis"
 	"creepy/pkg/config"
 	"flag"
 	"log"
@@ -13,14 +13,16 @@ func main() {
     cfg := readConfig()
 	config.Set(cfg)
 
-	db, err := mysql.NewMySQLGormConnection(cfg.DB)
+	db, err := postgis.NewPostgresGormConnection(cfg.DB)
     if err != nil {
         log.Fatal(err)
     }
-	mysql.Migrate(db)
+	if err := postgis.Migrate(db); err != nil {
+        log.Fatal(err)
+    }
 
     // Initialize repositories
-    propertyRepo := mysql.NewMySQLPropertyRepository(db)
+    propertyRepo := postgis.NewMySQLPropertyRepository(db)
     // Initialize other repositories...
 
     // Initialize services with repository interfaces
