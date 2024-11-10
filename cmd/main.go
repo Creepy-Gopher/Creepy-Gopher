@@ -15,9 +15,10 @@ func main() {
 
 	fmt.Println("env path:", *envPath)
 
-	cfg := readConfig()
+	cfg := config.ReadConfig(*envPath)
 
-	app, err := service.NewAppContainer(cfg)
+	// app, err := service.NewAppContainer(cfg)
+	_, err := service.NewAppContainer(*cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

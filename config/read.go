@@ -15,8 +15,16 @@ import (
 // 		Telegram: NewTelegramConfig(),
 // 	}
 // }
+// NewConfig initializes a new Config instance from environment variables
+func NewConfig() *Config {
+	return &Config{
+		Server:   NewServerConfig(),
+		DB:       NewDBConfig(),
+		Telegram: NewTelegramConfig(),
+	}
+}
 
-func readConfig(envPath string) *Config {
+func ReadConfig(envPath string) *Config {
 	err := godotenv.Load(envPath)	
  	if err != nil {
   		log.Fatalf("Error loading .env file: %s", err)

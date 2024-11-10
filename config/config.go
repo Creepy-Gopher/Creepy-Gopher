@@ -30,12 +30,12 @@ type TelegramConfig struct {
 	BotToken string
 }
 
-// NewConfig initializes a new Config instance from environment variables
-func NewConfig() *Config {
-	return &Config{
-		Server:   NewServerConfig(),
-		DB:       NewDBConfig(),
-		Telegram: NewTelegramConfig(),
-	}
-}
+// // NewConfig initializes a new Config instance from environment variables
+// func NewConfig() *Config {
+// 	return &Config{
+// 		Server:   NewServerConfig(),
+// 		DB:       NewDBConfig(),
+// 		Telegram: NewTelegramConfig(),
+// 	}
+// }
 
