@@ -4,6 +4,8 @@ import (
 	"creepy/service"
 	"log"
 	"flag"
+	"fmt"
+	"creepy/config"
 )
 
 func main() {
@@ -13,7 +15,7 @@ func main() {
 
 	fmt.Println("env path:", *envPath)
 
-	//cfg := readConfig()
+	cfg := readConfig()
 
 	app, err := service.NewAppContainer(cfg)
 	if err != nil {

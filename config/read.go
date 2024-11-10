@@ -1,65 +1,55 @@
 package config
 
 import (
-	"path/filepath"
+	// "path/filepath"
+	"os"
+	"log"
+	"github.com/joho/godotenv"
 )
 
 // NewConfig initializes a new Config instance from environment variables
-func NewConfig() *Config {
-	return &Config{
-		Server:   NewServerConfig(),
-		DB:       NewDBConfig(),
-		Telegram: NewTelegramConfig(),
-	}
-}
+// func NewConfig() *Config {
+// 	return &Config{
+// 		Server:   NewServerConfig(),
+// 		DB:       NewDBConfig(),
+// 		Telegram: NewTelegramConfig(),
+// 	}
+// }
 
 func readConfig(envPath string) *Config {
+	err := godotenv.Load(envPath)	
+ 	if err != nil {
+  		log.Fatalf("Error loading .env file: %s", err)
+ 	}
 
+	return NewConfig()
 }
 
 // NewServerConfig initializes a new ServerConfig instance from environment variables
 func NewServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:                   getEnv("SERVER_PORT", "8000"),
-		Host:                   getEnv("SERVER_HOST", "0.0.0.0"),
-		TokenExpMinutes:        getEnvAsInt("TOKEN_EXP_MINUTES", 1440),
-		RefreshTokenExpMinutes: getEnvAsInt("REFRESH_TOKEN_EXP_MINUTES", 2880),
-		TokenSecret:            getEnv("TOKEN_SECRET", "P@$$%Secret6677"),
+		Port:					os.Getenv("SERVER_PORT"),
+		Host:                   os.Getenv("SERVER_HOST"),
+		TokenExpMinutes:        os.Getenv("TOKEN_EXP_MINUTES"),
+		RefreshTokenExpMinutes: os.Getenv("REFRESH_TOKEN_EXP_MINUTES"),
+		TokenSecret:            os.Getenv("TOKEN_SECRET"),
 	}
 }
 
 // NewDBConfig initializes a new DBConfig instance from environment variables
 func NewDBConfig() DBConfig {
 	return DBConfig{
-		User:     getEnv("DB_USER", "root"),
-		Password: getEnv("DB_PASS", "123456"),
-		Host:     getEnv("DB_HOST", "localhost"),
-		Port:     getEnv("DB_PORT", "5432"),
-		Name:     getEnv("DB_NAME", "magic_creeper"),
+		User: 		os.Getenv("DB_USER"),
+		Password: 	os.Getenv("DB_PASS"),
+		Host: 		os.Getenv("DB_HOST"),
+		Port: 		os.Getenv("DB_PORT"),
+		Name: 		os.Getenv("DB_NAME"),
 	}
 }
 
 // NewTelegramConfig initializes a new TelegramConfig instance from environment variables
 func NewTelegramConfig() TelegramConfig {
 	return TelegramConfig{
-		BotToken: getEnv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN"),
+		BotToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
 	}
-}
-
-// Helper function to retrieve environment variables with a fallback default value
-func getEnv(key string, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
-}
-
-// Helper function to retrieve environment variables as an integer with a fallback default value
-func getEnvAsInt(key string, defaultValue int) int {
-	if value, exists := os.LookupEnv(key); exists {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
 }

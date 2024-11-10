@@ -9,9 +9,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewMysqlGormConnection(dbConfig config.DB) (*gorm.DB, error) {
+func NewMysqlGormConnection(dbConfig config.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable",
-		dbConfig.Host, dbConfig.User, dbConfig.Pass, dbConfig.DBName, dbConfig.Port)
+		dbConfig.Host, dbConfig.User, dbConfig.Password, dbConfig.Name, dbConfig.Port)
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
 
