@@ -3,9 +3,16 @@ package main
 import (
 	"creepy/service"
 	"log"
+	"flag"
 )
 
 func main() {
+
+	envPath := flag.String("env", "", "path of env file");
+	flag.Parse()
+
+	fmt.Println("env path:", *envPath)
+
 	//cfg := readConfig()
 
 	app, err := service.NewAppContainer(cfg)
