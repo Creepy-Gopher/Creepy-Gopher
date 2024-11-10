@@ -17,9 +17,13 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+    if err := postgis.AddExtension(db); err != nil {
+        log.Fatal(err)
+    }
 	if err := postgis.Migrate(db); err != nil {
         log.Fatal(err)
     }
+
 
     // Initialize repositories
     propertyRepo := postgis.NewMySQLPropertyRepository(db)
