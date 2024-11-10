@@ -14,6 +14,7 @@ type PropertyService struct {
 }
 
 func NewPropertyService(repo storage.PropertyRepository) *PropertyService {
+	// TODO
     return &PropertyService{Repo: repo}
 }
 

@@ -1,16 +1,19 @@
 package main
 
 import (
-    "log"
+	"creepy/internal/service"
+	"creepy/internal/storage/mysql"
 	"creepy/pkg/config"
-    "creepy/internal/service"
-    "creepy/internal/storage/mysql"
+	"flag"
+	"log"
 )
 
 func main() {
     // Initialize the database connection
-	config := config.Config{DB: config.DB{}}
-	db, err := mysql.NewMySQLGormConnection(config.DB)
+    cfg := readConfig()
+	config.Set(cfg)
+
+	db, err := mysql.NewMySQLGormConnection(cfg.DB)
     if err != nil {
         log.Fatal(err)
     }
@@ -27,4 +30,12 @@ func main() {
 
     // Pass services to your handlers, bots, etc.
     // ...
+}
+
+
+var envFilePath = flag.String("envpath", "", ".env file path")
+
+func readConfig() config.Config {
+	flag.Parse()
+	return config.ReadConfig(*envFilePath)
 }
