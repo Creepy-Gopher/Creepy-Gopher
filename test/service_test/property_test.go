@@ -60,6 +60,10 @@ func (m *MockPropertyRepository) ListProperties(ctx context.Context, filter *mod
     return result, nil
 }
 
+func (m *MockPropertyRepository) GetPropertyByURL(ctx context.Context, url string) (*models.Property, error) {
+    return nil, fmt.Errorf("not implemented")
+}
+
 
 func TestPropertyService_GetProperty(t *testing.T) {
     // Initialize mock repository
