@@ -19,6 +19,7 @@ type Repository[T any] interface {
 type PropertyRepository interface {
     Repository[models.Property]
     ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error)
+    GetPropertyByURL(ctx context.Context, url string) (*models.Property, error)
 }
 
 type FilterRepository interface {

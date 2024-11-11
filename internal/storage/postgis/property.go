@@ -61,3 +61,7 @@ func (r *propertyRepo) Delete(ctx context.Context, id uuid.UUID) error {
 func (r *propertyRepo) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+func (r *propertyRepo) GetPropertyByURL(ctx context.Context, url string) (*models.Property, error) {
+    return nil, fmt.Errorf("not implemented")
+}
