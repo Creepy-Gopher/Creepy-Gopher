@@ -3,6 +3,7 @@ package postgis
 import (
 	"context"
 	"creepy/internal/models"
+	"creepy/internal/storage"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,37 +11,45 @@ import (
 )
 
 type userRepo struct {
-	db *gorm.DB
+	DB *gorm.DB
 }
 
-func NewUserRepo(db *gorm.DB) *userRepo {
+func NewUserRepo(db *gorm.DB) storage.UserRepository {
 	return &userRepo{
-		db: db,
+		DB: db,
 	}
 }
 
-func (ur *userRepo) Insert(ctx context.Context, user *models.User) error {
-	if err := ur.db.WithContext(ctx).Save(user).Error; err != nil {
-		return err
-	}
-	return nil
+func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+    var user models.User
+    result := r.DB.WithContext(ctx).First(&user, id)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    return &user, nil
 }
 
-func (ur *userRepo) DeleteByID(ctx context.Context, id *uuid.UUID) error {
-	user := models.User{Model: models.Model{ID: *id}}
-    result := ur.db.WithContext(ctx).Delete(&user, id)
+func (r *userRepo) Save(ctx context.Context, entity *models.User) error {
+    	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
+            return err
+        }
+        return nil
+}
+
+func (r *userRepo) Update(ctx context.Context, entity *models.User) error {
+    result := r.DB.WithContext(ctx).Model(&models.User{}).Updates(entity)
     if result.Error != nil {
         return result.Error
     }
     if result.RowsAffected == 0 {
-        return fmt.Errorf("no record found with ID %v", id)
+        return fmt.Errorf("no record found with ID %v", entity.ID)
     }
     return nil
 }
 
-func (ur *userRepo) UpdateByID(ctx context.Context, id *uuid.UUID, updates map[string]interface{}) error {
-    user := models.User{Model: models.Model{ID: *id}}
-    result := ur.db.WithContext(ctx).Model(&user).Updates(updates)
+func (r *userRepo) Delete(ctx context.Context, id uuid.UUID) error {
+    user := models.User{Model: models.Model{ID: id}}
+    result := r.DB.WithContext(ctx).Delete(&user, id)
     if result.Error != nil {
         return result.Error
     }

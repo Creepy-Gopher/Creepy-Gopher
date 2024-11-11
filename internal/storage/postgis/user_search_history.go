@@ -3,6 +3,7 @@ package postgis
 import (
 	"context"
 	"creepy/internal/models"
+	"creepy/internal/storage"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,37 +11,45 @@ import (
 )
 
 type userSearchHistoryRepo struct {
-	db *gorm.DB
+	DB *gorm.DB
 }
 
-func NewUserSearchHistoryRepo(db *gorm.DB) *userSearchHistoryRepo {
+func NewUserSearchHistoryRepo(db *gorm.DB) storage.UserSearchHistoryRepository {
 	return &userSearchHistoryRepo{
-		db: db,
+		DB: db,
 	}
 }
 
-func (ur *userSearchHistoryRepo) Insert(ctx context.Context, userSearchHistory *models.UserSearchHistory) error {
-	if err := ur.db.WithContext(ctx).Save(userSearchHistory).Error; err != nil {
-		return err
-	}
-	return nil
+func (r *userSearchHistoryRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.UserSearchHistory, error) {
+    var userSearchHistory models.UserSearchHistory
+    result := r.DB.WithContext(ctx).First(&userSearchHistory, id)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    return &userSearchHistory, nil
 }
 
-func (ur userSearchHistoryRepo) DeleteByID(ctx context.Context, id *uuid.UUID) error {
-	userSearchHistory := models.User{Model: models.Model{ID: *id}}
-    result := ur.db.WithContext(ctx).Delete(&userSearchHistory, id)
+func (r *userSearchHistoryRepo) Save(ctx context.Context, entity *models.UserSearchHistory) error {
+    	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
+            return err
+        }
+        return nil
+}
+
+func (r *userSearchHistoryRepo) Update(ctx context.Context, entity *models.UserSearchHistory) error {
+    result := r.DB.WithContext(ctx).Model(&models.UserSearchHistory{}).Updates(entity)
     if result.Error != nil {
         return result.Error
     }
     if result.RowsAffected == 0 {
-        return fmt.Errorf("no record found with ID %v", id)
+        return fmt.Errorf("no record found with ID %v", entity.ID)
     }
     return nil
 }
 
-func (ur userSearchHistoryRepo) UpdateByID(ctx context.Context, id *uuid.UUID, updates map[string]interface{}) error {
-    userSearchHistory := models.User{Model: models.Model{ID: *id}}
-    result := ur.db.WithContext(ctx).Model(&userSearchHistory).Updates(updates)
+func (r *userSearchHistoryRepo) Delete(ctx context.Context, id uuid.UUID) error {
+    userSearchHistory := models.UserSearchHistory{Model: models.Model{ID: id}}
+    result := r.DB.WithContext(ctx).Delete(&userSearchHistory, id)
     if result.Error != nil {
         return result.Error
     }

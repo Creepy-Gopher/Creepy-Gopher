@@ -3,6 +3,7 @@ package postgis
 import (
 	"context"
 	"creepy/internal/models"
+	"creepy/internal/storage"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,35 +11,46 @@ import (
 )
 
 
-type FilterRepo struct {
-	db *gorm.DB
+type filterRepo struct {
+	DB *gorm.DB
 }
 
-func NewFilterRepo(db *gorm.DB) *FilterRepo {
-	return &FilterRepo{db}
+func NewFilterRepo(db *gorm.DB) storage.FilterRepository {
+	return &filterRepo{
+        DB: db,
+    }
 }
 
-func (fr *FilterRepo) Insert(ctx context.Context, filter *models.Filter) error {
-	if err := fr.db.WithContext(ctx).Save(filter).Error; err != nil {
-		return err
-	}
-	return nil
+func (r *filterRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Filter, error) {
+    var filter models.Filter
+    result := r.DB.WithContext(ctx).First(&filter, id)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    return &filter, nil
 }
 
-func (fr FilterRepo) DeleteByID(ctx context.Context, id *uuid.UUID) error {
-    result := fr.db.WithContext(ctx).Delete(&models.Filter{}, id)
+func (r *filterRepo) Save(ctx context.Context, entity *models.Filter) error {
+    	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
+            return err
+        }
+        return nil
+}
+
+func (r *filterRepo) Update(ctx context.Context, entity *models.Filter) error {
+    result := r.DB.WithContext(ctx).Model(&models.Filter{}).Updates(entity)
     if result.Error != nil {
         return result.Error
     }
     if result.RowsAffected == 0 {
-        return fmt.Errorf("no record found with ID %v", id)
+        return fmt.Errorf("no record found with ID %v", entity.ID)
     }
     return nil
 }
 
-func (fr FilterRepo) UpdateByID(ctx context.Context, id *uuid.UUID, updates map[string]interface{}) error {
-    filter := models.Filter{Model: models.Model{ID: *id}}
-    result := fr.db.WithContext(ctx).Model(&filter).Updates(updates)
+func (r *filterRepo) Delete(ctx context.Context, id uuid.UUID) error {
+    filter := models.Filter{Model: models.Model{ID: id}}
+    result := r.DB.WithContext(ctx).Delete(&filter, id)
     if result.Error != nil {
         return result.Error
     }

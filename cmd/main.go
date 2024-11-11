@@ -26,7 +26,7 @@ func main() {
 
 
     // Initialize repositories
-    propertyRepo := postgis.NewMySQLPropertyRepository(db)
+    propertyRepo := postgis.NewPropertyRepository(db)
     // Initialize other repositories...
 
     // Initialize services with repository interfaces

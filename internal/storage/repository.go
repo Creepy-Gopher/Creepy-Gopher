@@ -7,15 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type PropertyRepository interface {
-    SaveProperty(ctx context.Context, property *models.Property) error
-	GetPropertyByID(ctx context.Context, id uuid.UUID) (*models.Property, error)
-    UpdateProperty(ctx context.Context, property *models.Property) error
-    DeleteProperty(ctx context.Context, id uuid.UUID) error
-    ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error)
-}
-
-// Generic ?
 
 // CRUD: Create, Read, Update, Delete
 type Repository[T any] interface {
@@ -25,7 +16,32 @@ type Repository[T any] interface {
     Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type FilterRepository interface {
+type PropertyRepository interface {
     Repository[models.Property]
-    // Add property-specific methods if needed
+    ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error)
+}
+
+type FilterRepository interface {
+    Repository[models.Filter]
+    // TODO: Add specific methods if needed
+}
+
+type UserRepository interface {
+    Repository[models.User]
+    // TODO: Add specific methods if needed
+}
+
+type BookmarkRepository interface {
+    Repository[models.Bookmark]
+    // TODO: Add specific methods if needed
+}
+
+type UserSearchHistoryRepository interface {
+    Repository[models.UserSearchHistory]
+    // TODO: Add specific methods if needed
+}
+
+type WatchListRepository interface {
+    Repository[models.WatchList]
+    // TODO: Add specific methods if needed
 }
