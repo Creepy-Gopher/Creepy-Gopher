@@ -21,6 +21,7 @@ type Property struct {
 	Floor        uint
 	HasElevator  bool
 	HasStorage   bool
+	HasParking   bool
 	Latitude     float64
 	Longitude    float64
 	Source       string
