@@ -18,11 +18,12 @@ type Filter struct {
 	DealingType       string   `gorm:"uniqueIndex:idx_filterset_all"`
 	HasElevator       bool     `gorm:"uniqueIndex:idx_filterset_all"`
 	HasStorage        bool     `gorm:"uniqueIndex:idx_filterset_all"`
+	HasParking        bool     `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationLatitude  float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationLongitude float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationRadius    float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	CreatedAfter      string   `gorm:"uniqueIndex:idx_filterset_all"`
-	Cities            []string `gorm:"Index:idx_filterset_all;type:text[]"` 
-	Districts         []string `gorm:"Index:idx_filterset_all;type:text[]"` 
-	Sources           []string `gorm:"Index:idx_filterset_all;type:text[]"` 
+	City              string   `gorm:"uniqueIndex:idx_filterset_all"` 
+	District          string   `gorm:"uniqueIndex:idx_filterset_all"`
+	Source            string   `gorm:"uniqueIndex:idx_filterset_all"`
 }

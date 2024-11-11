@@ -25,6 +25,6 @@ type Property struct {
 	Latitude     float64
 	Longitude    float64
 	Source       string
-	URL          string
-	Images       []string `gorm:"type:text[]"`
+	URL          string   `gorm:"uniqueIndex"`
+	Image       string 
 }
