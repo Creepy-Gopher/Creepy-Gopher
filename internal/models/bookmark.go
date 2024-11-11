@@ -4,8 +4,8 @@ import "github.com/google/uuid"
 
 type Bookmark struct {
 	Model
-	UserID     uuid.UUID
-	User       User `gorm:"foreignKey:UserID"`
+	UserName   string
+	User       User     `gorm:"foreignKey:UserName"`
 	PropertyID uuid.UUID
 	Property   Property `gorm:"foreignKey:PropertyID"`
 }

@@ -1,20 +1,47 @@
 package main
 
 import (
-	"creepy_gopher/config"
+	"creepy/internal/service"
+	"creepy/internal/storage/postgis"
+	"creepy/pkg/config"
 	"flag"
-	"fmt"
 	"log"
+	"fmt"
 	"os"
 	"sync"
-
 	"go.uber.org/zap"
 )
 
 var configPath = flag.String("config", ".env", "path to the configuration file")
 
 func main() {
-	cfg := readConfig()
+    // Initialize the database connection
+    cfg := readConfig()
+	config.Set(cfg)
+
+	db, err := postgis.NewPostgresGormConnection(cfg.DB)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if err := postgis.AddExtension(db); err != nil {
+        log.Fatal(err)
+    }
+	if err := postgis.Migrate(db); err != nil {
+        log.Fatal(err)
+    }
+
+
+    // Initialize repositories
+    propertyRepo := postgis.NewPropertyRepository(db)
+    // Initialize other repositories...
+
+    // Initialize services with repository interfaces
+    propertyService := service.NewPropertyService(propertyRepo)
+	_ = propertyService
+    // Initialize other services...
+
+    // Pass services to your handlers, bots, etc.
+    // ...
 
 	// Use the logger
 	cfg.Logger.Info("Application starting", zap.String("version", "1.0.0"))

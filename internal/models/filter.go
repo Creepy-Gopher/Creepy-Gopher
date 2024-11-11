@@ -14,15 +14,16 @@ type Filter struct {
 	FloorMax          uint     `gorm:"uniqueIndex:idx_filterset_all"`
 	BuildYearMin      uint     `gorm:"uniqueIndex:idx_filterset_all"`
 	BuildYearMax      uint     `gorm:"uniqueIndex:idx_filterset_all"`
-	Cities            []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
-	Districts         []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
 	PropertyType      string   `gorm:"uniqueIndex:idx_filterset_all"`
 	DealingType       string   `gorm:"uniqueIndex:idx_filterset_all"`
 	HasElevator       bool     `gorm:"uniqueIndex:idx_filterset_all"`
 	HasStorage        bool     `gorm:"uniqueIndex:idx_filterset_all"`
+	HasParking        bool     `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationLatitude  float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationLongitude float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	LocationRadius    float64  `gorm:"uniqueIndex:idx_filterset_all"`
 	CreatedAfter      string   `gorm:"uniqueIndex:idx_filterset_all"`
-	Sources           []string `gorm:"uniqueIndex:idx_filterset_all;type:json"` // JSON array
+	City              string   `gorm:"uniqueIndex:idx_filterset_all"` 
+	District          string   `gorm:"uniqueIndex:idx_filterset_all"`
+	Source            string   `gorm:"uniqueIndex:idx_filterset_all"`
 }

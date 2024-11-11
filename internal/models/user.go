@@ -5,4 +5,5 @@ type User struct {
 	UserName  string `gorm:"uniqueIndex"`
 	Role      string
 	IsPremium bool
+	IsAdmin   bool
 }

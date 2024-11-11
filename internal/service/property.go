@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/storage"
 	"errors"
@@ -14,27 +15,34 @@ type PropertyService struct {
 }
 
 func NewPropertyService(repo storage.PropertyRepository) *PropertyService {
+	// TODO: Error handling
     return &PropertyService{Repo: repo}
 }
 
 func (s *PropertyService) CreateProperty(ctx context.Context, property *models.Property) error {
-    return s.Repo.SaveProperty(ctx, property)
+	if property.ID == uuid.Nil {
+        return fmt.Errorf("cant save property without ID")
+	}
+	// TODO: Error handling
+    return s.Repo.Save(ctx, property)
 }
 
 func (s *PropertyService) GetProperty(ctx context.Context, id uuid.UUID) (*models.Property, error) {
-    return s.Repo.GetPropertyByID(ctx, id)
+    // TODO: Error handling
+    return s.Repo.GetByID(ctx, id)
 }
 
 func (s *PropertyService) UpdateProperty(ctx context.Context, property *models.Property) error {
-	return s.Repo.UpdateProperty(ctx, property)
+	// TODO: Error handling
+	return s.Repo.Update(ctx, property)
 }
 
 func (s *PropertyService) DeleteProperty(ctx context.Context, id uuid.UUID) error {
-	return s.Repo.DeleteProperty(ctx, id)
+	// TODO: Error handling
+	return s.Repo.Delete(ctx, id)
 }
 
-// Additional business logic methods...
-
 func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
+	// TODO
 	return nil, errors.New("not implemented")
 }
