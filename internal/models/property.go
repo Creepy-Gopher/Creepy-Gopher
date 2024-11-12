@@ -1,7 +1,10 @@
 package models
 
+import "github.com/google/uuid"
+
 type Property struct {
 	Model
+	ID           uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Title        string
 	Description  string
 	BuyPrice     uint64
@@ -25,7 +28,6 @@ type Property struct {
 	Latitude     float64
 	Longitude    float64
 	Source       string
-	URL          string   `gorm:"uniqueIndex"`
-	Image       string 
-
+	URL          string `gorm:"uniqueIndex"`
+	Image        string
 }

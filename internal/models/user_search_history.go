@@ -8,8 +8,8 @@ import (
 
 type UserSearchHistory struct {
 	Model
-	UserName string
-	User     User `gorm:"foreignKey:UserName;constraint:OnDelete:CASCADE"`
+	UserID   uuid.UUID `gorm:"type:uuid"`
+	User     User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	FilterID uuid.UUID
 	Filter   Filter `gorm:"foreignKey:FilterID;constraint:OnDelete:SET NULL"`
 	Date     time.Time

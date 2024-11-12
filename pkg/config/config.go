@@ -4,6 +4,10 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv" // افزودن پکیج godotenv برای بارگذاری .env
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Config holds the application configuration
@@ -28,8 +32,8 @@ type DBConfig struct {
 	User     string
 	Password string
 	Host     string
-	Port     string
-	Name     string
+	Port     int
+	DBName   string
 }
 
 // TelegramConfig holds the Telegram bot configuration
@@ -39,6 +43,12 @@ type TelegramConfig struct {
 
 // NewConfig initializes a new Config instance from environment variables
 func NewConfig() *Config {
+	// Load environment variables from .env file
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
+
 	cfg := &Config{
 		Server:   NewServerConfig(),
 		DB:       NewDBConfig(),
@@ -76,12 +86,17 @@ func NewServerConfig() ServerConfig {
 
 // NewDBConfig initializes a new DBConfig instance from environment variables
 func NewDBConfig() DBConfig {
+	portStr := getEnv("DB_PORT", "5432")
+	port, err := strconv.Atoi(portStr) // Convert to int
+	if err != nil {
+		log.Fatalf("Invalid port number: %v", err)
+	}
 	return DBConfig{
 		User:     getEnv("DB_USER", "root"),
-		Password: getEnv("DB_PASS", "123456"),
+		Password: getEnv("DB_PASSWORD", "123456"),
 		Host:     getEnv("DB_HOST", "localhost"),
-		Port:     getEnv("DB_PORT", "5432"),
-		Name:     getEnv("DB_NAME", "magic_creeper"),
+		Port:     port,
+		DBName:   getEnv("DB_NAME", "magic_creeper"),
 	}
 }
 
@@ -92,7 +107,7 @@ func NewTelegramConfig() TelegramConfig {
 	}
 }
 
-// Helper function to retrieve environment variables with a fallback default value
+// getEnv retrieves environment variables with a fallback default value
 func getEnv(key string, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -100,7 +115,7 @@ func getEnv(key string, defaultValue string) string {
 	return defaultValue
 }
 
-// Helper function to retrieve environment variables as an integer with a fallback default value
+// getEnvAsInt retrieves environment variables as an integer with a fallback default value
 func getEnvAsInt(key string, defaultValue int) int {
 	if value, exists := os.LookupEnv(key); exists {
 		if intValue, err := strconv.Atoi(value); err == nil {
@@ -109,4 +124,3 @@ func getEnvAsInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
-

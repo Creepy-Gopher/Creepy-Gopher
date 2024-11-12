@@ -1,51 +1,50 @@
 package main
 
 import (
+	"creepy/internal/bot"
 	"creepy/internal/service"
 	"creepy/internal/storage/postgis"
 	"creepy/pkg/config"
 	"flag"
 	"log"
-	"fmt"
-	"os"
 	"sync"
+
 	"go.uber.org/zap"
 )
 
 var configPath = flag.String("config", ".env", "path to the configuration file")
 
 func main() {
-    // Initialize the database connection
-    cfg := readConfig()
-	config.Set(cfg)
+	// Initialize the configuration
+	cfg := readConfig()
+	config.Set(*cfg)
 
+	// Set up the database connection
 	db, err := postgis.NewPostgresGormConnection(cfg.DB)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if err := postgis.AddExtension(db); err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal("Failed to connect to the database:", err)
+	}
+	defer func() {
+		sqlDB, _ := db.DB()
+		sqlDB.Close()
+	}()
+
+	// Add necessary extensions and run migrations
+	if err := postgis.AddExtension(db); err != nil {
+		log.Fatal("Failed to add database extensions:", err)
+	}
 	if err := postgis.Migrate(db); err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal("Failed to run database migrations:", err)
+	}
 
-
-    // Initialize repositories
-    propertyRepo := postgis.NewPropertyRepository(db)
-    // Initialize other repositories...
-
-    // Initialize services with repository interfaces
-    propertyService := service.NewPropertyService(propertyRepo)
-	_ = propertyService
-    // Initialize other services...
-
-    // Pass services to your handlers, bots, etc.
-    // ...
+	// Initialize the repository and service layers
+	propertyRepo := postgis.NewPropertyRepository(db)
+	propertyService := service.NewPropertyService(propertyRepo)
 
 	// Use the logger
 	cfg.Logger.Info("Application starting", zap.String("version", "1.0.0"))
 
+	// Run goroutines for crawler and Telegram bot
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -56,40 +55,31 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		runTelegramBot(cfg)
+		runTelegramBot(cfg, propertyService)
 	}()
 
 	wg.Wait()
-
 	cfg.Logger.Info("Application shutting down")
 }
 
 func readConfig() *config.Config {
 	flag.Parse()
-
-	if cfgPathEnv := os.Getenv("APP_CONFIG_PATH"); len(cfgPathEnv) > 0 {
-		*configPath = cfgPathEnv
-	}
-
-	if len(*configPath) == 0 {
-		log.Fatal("configuration file not found")
-	}
-
 	return config.NewConfig()
 }
 
 func runCrawler(cfg *config.Config) {
 	cfg.Logger.Info("Starting property crawler")
-	// Implement your crawling logic here
+	// پیاده‌سازی لاجیک کرالر
 }
 
-func runTelegramBot(cfg *config.Config) {
+func runTelegramBot(cfg *config.Config, propertyService *service.PropertyService) {
 	cfg.Logger.Info("Starting Telegram bot")
-	// Implement your Telegram bot logic here
-}
 
-/*
-cfg.Logger.Info("User logged in",
-    zap.String("username", "john_doe"),
-    zap.Int("user_id", 12345))
-*/
+	// مثال ساده برای استفاده از پارامترها:
+	telegramBot, err := bot.NewBot(cfg, propertyService, cfg.Logger)
+	if err != nil {
+		cfg.Logger.Fatal("Failed to create bot", zap.Error(err))
+	}
+
+	telegramBot.Start()
+}

@@ -1,11 +1,13 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Bookmark struct {
 	Model
-	UserName   string
-	User       User     `gorm:"foreignKey:UserName"`
+	UserID     uuid.UUID `gorm:"type:uuid"`
+	User       User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	PropertyID uuid.UUID
-	Property   Property `gorm:"foreignKey:PropertyID"`
+	Property   Property `gorm:"foreignKey:PropertyID;constraint:OnDelete:CASCADE"`
 }
