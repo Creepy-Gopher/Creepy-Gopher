@@ -6,7 +6,7 @@ import (
 	"creepy/pkg/config"
 	"flag"
 	"log"
-	"fmt"
+	//"fmt"
 	"os"
 	"sync"
 	"go.uber.org/zap"
@@ -17,8 +17,9 @@ var configPath = flag.String("config", ".env", "path to the configuration file")
 func main() {
     // Initialize the database connection
     cfg := readConfig()
-	config.Set(cfg)
-
+	//config.Set(cfg)
+	log.Println(cfg)
+	log.Fatal("out")
 	db, err := postgis.NewPostgresGormConnection(cfg.DB)
     if err != nil {
         log.Fatal(err)

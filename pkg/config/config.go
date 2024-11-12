@@ -1,7 +1,6 @@
 package config
 
 import (
-	_ "log"
 	"os"
 	"strconv"
 
@@ -56,7 +55,7 @@ func NewConfig() *Config {
 func initLogger() *zap.Logger {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	//config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	logger, err := config.Build()
 	if err != nil {
