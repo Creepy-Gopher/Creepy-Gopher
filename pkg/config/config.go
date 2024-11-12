@@ -1,9 +1,12 @@
 package config
 
 import (
-	"log"
+	_ "log"
 	"os"
 	"strconv"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Config holds the application configuration
