@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/storage"
+	"creepy/internal/storage/postgis"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -62,8 +63,23 @@ func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Fil
 }
 
 func (s *PropertyService) CreatePropertyByAdmin(ctx context.Context, property *models.Property) error {
-	// userContextKey := "user"
-	// user, ok := ctx.Value(userContextKey).(*models.User)
+	userContextKey := "user"
+	user, ok := ctx.Value(userContextKey).(*models.User)
+	if !ok {
+		return fmt.Errorf("context has not user")
+	}
+	if !user.IsAdmin {
+		return fmt.Errorf("permission denied")
+	}
+	sourceType := "admin" // TODO: must be global variable
+	property.Source = sourceType
+	return s.Repo.Save(ctx, property)
+}
 
+func (s *PropertyService) CreatePropertyByCrawler(ctx context.Context, property *models.Property) error {
+	sourceType := "crawler" // TODO: must be global variable
+	if property.Source == "" {
+		property.Source = sourceType
+	}
 	return s.Repo.Save(ctx, property)
 }
