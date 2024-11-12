@@ -1,9 +1,11 @@
 package config
 
 import (
-	"log"
+	//"log"
 	"os"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 // Config holds the application configuration
@@ -53,7 +55,7 @@ func NewConfig() *Config {
 func initLogger() *zap.Logger {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	//config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	logger, err := config.Build()
 	if err != nil {

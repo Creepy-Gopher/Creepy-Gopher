@@ -9,9 +9,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewPostgresGormConnection(dbConfig config.DB) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
-		dbConfig.Host, dbConfig.User, dbConfig.Pass, dbConfig.DBName, dbConfig.Port)
+func NewPostgresGormConnection(dbConfig config.DBConfig) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+		dbConfig.Host, dbConfig.User, dbConfig.Password, dbConfig.Name, dbConfig.Port)
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
 
