@@ -3,15 +3,14 @@ package service
 import (
 	"creepy/internal/storage/postgis"
 	"creepy/pkg/config"
-	"fmt"
 	"log"
 
 	"gorm.io/gorm"
 )
 
 type AppContainer struct {
-	cfg                 config.Config
-	dbConn              *gorm.DB
+	Cfg                 config.Config
+	DbConn              *gorm.DB
 	propertyService		*PropertyService
 	userService			*UserService
 	filterService 		*FilterService
@@ -19,45 +18,39 @@ type AppContainer struct {
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 	app := &AppContainer{
-		cfg: cfg,
+		Cfg: cfg,
 	}
 
 	app.mustInitDB()
 
-	if err := app.setPropertyService(); err != nil {
-		app.cfg.Logger.Error(err.Error())
-	}
-	if err := app.setUserService(); err != nil {
-		app.cfg.Logger.Error(err.Error())
-	}
-	if err := app.setFilterService(); err != nil {
-		app.cfg.Logger.Error(err.Error())
-	}
+	app.setPropertyService()
+	app.setUserService()
+	app.setFilterService()
 	return app, nil
 }
 
 func (a *AppContainer) RawDBConnection() *gorm.DB {
-	return a.dbConn
+	return a.DbConn
 }
 
 func (a *AppContainer) mustInitDB() {
-	if a.dbConn != nil {
+	if a.DbConn != nil {
 		return
 	}
 
-	db, err := postgis.NewPostgresGormConnection(a.cfg.DB)
+	db, err := postgis.NewPostgresGormConnection(a.Cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	a.dbConn = db
+	a.DbConn = db
 
-	err = postgis.AddExtension(a.dbConn)
+	err = postgis.AddExtension(a.DbConn)
 	if err != nil {
 		log.Fatal("Create extension failed: ", err)
 	}
 
-	err = postgis.Migrate(a.dbConn)
+	err = postgis.Migrate(a.DbConn)
 	if err != nil {
 		log.Fatal("Migration failed: ", err)
 	}
@@ -68,40 +61,36 @@ func (a *AppContainer) PropertyService() *PropertyService {
 	return a.propertyService
 }
 
-func (a *AppContainer) setPropertyService() error {
+func (a *AppContainer) setPropertyService() {
 	if a.propertyService != nil {
-		return fmt.Errorf("application property service already exist")
+		return
 	}
-	a.propertyService = NewPropertyService(
-		postgis.NewPropertyRepository(a.dbConn),
+	a.propertyService = NewPropertyService(postgis.NewPropertyRepository(a.DbConn),
 	)
-	return nil
 }
 
 func (a *AppContainer) UserService() *UserService {
 	return a.userService
 }
 
-func (a *AppContainer) setUserService() error {
+func (a *AppContainer) setUserService() {
 	if a.userService != nil {
-		return fmt.Errorf("application user service already exist")
+		return
 	}
 	a.userService = NewUserService(
-		postgis.NewUserRepo(a.dbConn),
+		postgis.NewUserRepo(a.DbConn),
 	)
-	return nil
 }
 
 func (a *AppContainer) FilterService() *FilterService {
 	return a.filterService
 }
 
-func (a *AppContainer) setFilterService() error {
+func (a *AppContainer) setFilterService(){
 	if a.filterService != nil {
-		return fmt.Errorf("application filter service already exist")
+		return
 	}
 	a.filterService = NewFilterService(
-		postgis.NewFilterRepo(a.dbConn),
+		postgis.NewFilterRepo(a.DbConn),
 	)
-	return nil
 }

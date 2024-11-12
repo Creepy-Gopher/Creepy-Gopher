@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 // Config holds the application configuration
@@ -40,8 +39,8 @@ type TelegramConfig struct {
 }
 
 // NewConfig initializes a new Config instance from environment variables
-func NewConfig() *Config {
-	cfg := &Config{
+func NewConfig() Config {
+	cfg := Config{
 		Server:   NewServerConfig(),
 		DB:       NewDBConfig(),
 		Telegram: NewTelegramConfig(),
@@ -111,4 +110,3 @@ func getEnvAsInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
-
