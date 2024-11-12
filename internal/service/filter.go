@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/storage"
 
@@ -19,9 +18,6 @@ func NewFilterService(repo storage.FilterRepository) *FilterService {
 }
 
 func (s *FilterService) CreateFilter(ctx context.Context, filter *models.Filter) error {
-	if filter.ID == uuid.Nil {
-        return fmt.Errorf("cant save filter without ID")
-	}
 	// TODO: Error handling
     return s.Repo.Save(ctx, filter)
 }
