@@ -25,10 +25,10 @@ func Migrate(db *gorm.DB) error {
 	err := migrator.AutoMigrate(
 		&models.Filter{}, 
 		&models.Property{}, 
-		&models.User{},
 		&models.Bookmark{},
 		&models.UserSearchHistory{},
 		&models.WatchList{},
+		&models.User{},
 	)
 	if err != nil {
 		return err
