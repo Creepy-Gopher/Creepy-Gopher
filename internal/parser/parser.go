@@ -96,7 +96,7 @@ func parseDivarBuy(url string, linkType LinkType, page playwright.Page) (*models
 
 	resultProperty := models.Property{}
 
-	resultProperty.Type = propertyType
+	resultProperty.DealingType = propertyType
 
 	resultProperty.Source = platform
 	resultProperty.URL = url
@@ -126,10 +126,11 @@ func parseDivarBuy(url string, linkType LinkType, page playwright.Page) (*models
 					resultProperty.BuyPrice = num
 				}
 			case "Area":
-				num, err := strconv.ParseUint(content, 10, 64)
-				if err == nil {
-					resultProperty.Area = num
+				num, err := handlerArea(content)
+				if err != nil {
+					continue
 				}
+				resultProperty.Area = num
 			case "Rooms":
 				num, err := strconv.ParseUint(content, 10, 0)
 				if err == nil {
@@ -177,7 +178,7 @@ func parseDivarRent(url string, linkType LinkType, page playwright.Page) (*model
 
 	resultProperty := models.Property{}
 
-	resultProperty.Type = propertyType
+	resultProperty.DealingType = propertyType
 	resultProperty.Source = platform
 	resultProperty.URL = url
 
@@ -202,10 +203,11 @@ func parseDivarRent(url string, linkType LinkType, page playwright.Page) (*model
 		case "Description":
 			resultProperty.Description = content
 		case "Area":
-			num, err := strconv.ParseUint(content, 10, 64)
-			if err == nil {
-				resultProperty.Area = num
+			num, err := handlerArea(content)
+			if err != nil {
+				continue
 			}
+			resultProperty.Area = num
 		case "Rooms":
 			num, err := strconv.ParseUint(content, 10, 0)
 			if err == nil {
@@ -228,68 +230,93 @@ func parseDivarRent(url string, linkType LinkType, page playwright.Page) (*model
 			}
 		}
 	}
+
 	// New Selectors
 	selectors = Selectors[platform][isConvertable]
 
-	if isConvertable == "RentTypeConvertable" {
+	for field, selector := range selectors {
+		element, _ := page.QuerySelector(selector)
+		if element == nil {
+			continue
+		}
+		content, err := element.InnerHTML()
+		if err != nil {
+			fmt.Printf("Error getting inner HTML for field %s: %v\n", field, err)
+			continue
+		}
+		content = utils.ReplacePersianDigits(content)
 
-		for field, selector := range selectors {
-			element, _ := page.QuerySelector(selector)
-			if element == nil {
-				continue
-			}
-			content, err := element.InnerHTML()
+		switch field {
+		case "HasElevator":
+			resultProperty.HasElevator = !strings.Contains(content, "ندارد")
+
+		case "HasStorage":
+			resultProperty.HasStorage = !strings.Contains(content, "ندارد")
+
+		case "HasParking":
+			resultProperty.HasParking = !strings.Contains(content, "ندارد")
+
+		case "Floor":
+			floor, err := handlerFloor(content)
 			if err != nil {
-				fmt.Printf("Error getting inner HTML for field %s: %v\n", field, err)
 				continue
 			}
-			content = utils.ReplacePersianDigits(content)
+			resultProperty.Floor = floor
 
-			switch field {
-			case "HasElevator":
-				resultProperty.HasElevator = !strings.Contains(content, "ندارد")
-			case "HasStorage":
-				resultProperty.HasStorage = !strings.Contains(content, "ندارد")
-			case "HasParking":
-				resultProperty.HasParking = !strings.Contains(content, "ندارد")
-			case "Floor":
-				floor, err := handlerFloor(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.Floor = floor
-
-			case "RahnPriceMax":
-				price, err := handlerConvertablePrice(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.RahnPriceMax = price
-			case "RahnPriceMin":
-				price, err := handlerConvertablePrice(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.RahnPriceMin = price
-			case "RentPriceMin":
-				price, err := handlerConvertablePrice(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.RentPriceMin = price
-			case "RentPriceMin2":
-				price, err := handlerConvertablePrice(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.RentPriceMin = price
-			case "RentPriceMax":
-				price, err := handlerConvertablePrice(content)
-				if err != nil {
-					continue
-				}
-				resultProperty.RentPriceMax = uint64(price)
+		case "RahnPriceMax":
+			price, err := handlerConvertablePrice(content)
+			if err != nil {
+				continue
 			}
+			resultProperty.RahnPriceMax = price
+
+		case "RahnPriceMin":
+			price, err := handlerConvertablePrice(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RahnPriceMin = price
+
+		case "RentPriceMin":
+			price, err := handlerConvertablePrice(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RentPriceMin = price
+
+		case "RentPriceMin2":
+			price, err := handlerConvertablePrice(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RentPriceMin = price
+
+		case "RentPriceMax":
+			price, err := handlerConvertablePrice(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RentPriceMax = uint64(price)
+
+		case "RahnPriceNonConvertable":
+			price, err := hanldeNonConvertablePrices(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RahnPriceMin = price
+			resultProperty.RahnPriceMax = price
+
+		case "RentPriceNonConvertable":
+			price, err := hanldeNonConvertablePrices(content)
+			if err != nil {
+				continue
+			}
+			resultProperty.RentPriceMin = price
+			resultProperty.RentPriceMax = price
+			if price == 0 {
+				resultProperty.DealingType = "Rahn"
+			}
+
 		}
 	}
 	printStructFields(resultProperty)
