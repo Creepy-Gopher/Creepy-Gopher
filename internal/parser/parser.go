@@ -319,6 +319,6 @@ func parseDivarRent(url string, linkType LinkType, page playwright.Page) (*model
 
 		}
 	}
-	printStructFields(resultProperty)
+	//printStructFields(resultProperty)
 	return &resultProperty, nil
 }
