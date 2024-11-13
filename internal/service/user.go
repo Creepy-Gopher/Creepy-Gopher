@@ -36,3 +36,7 @@ func (s *UserService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	// TODO: Error handling
 	return s.Repo.Delete(ctx, id)
 }
+
+func (s *UserService) GetByUserName(ctx context.Context, userName string) (*models.User, error) {
+    return s.Repo.GetByUserName(ctx, userName)
+}

@@ -22,9 +22,10 @@ func (s *FilterService) CreateFilter(ctx context.Context, filter *models.Filter)
     return s.Repo.Save(ctx, filter)
 }
 
-func (s *FilterService) GetFilter(ctx context.Context, id uuid.UUID) (*models.Filter, error) {
+func (s *FilterService) GetFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error) {
     // TODO: Error handling
-    return s.Repo.GetByID(ctx, id)
+    // return s.Repo.GetByID(ctx, id)
+	return s.Repo.GetByFilter(ctx, filter)
 }
 
 func (s *FilterService) UpdateFilter(ctx context.Context, filter *models.Filter) error {
