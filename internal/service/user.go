@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/storage"
 
@@ -19,9 +18,6 @@ func NewUserService(repo storage.UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
-	if user.ID == uuid.Nil {
-        return fmt.Errorf("cant save user without ID")
-	}
 	// TODO: Error handling
     return s.Repo.Save(ctx, user)
 }

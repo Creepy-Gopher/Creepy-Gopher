@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/storage"
-	"errors"
+	//"creepy/internal/storage/postgis"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -20,9 +20,6 @@ func NewPropertyService(repo storage.PropertyRepository) *PropertyService {
 }
 
 func (s *PropertyService) CreateProperty(ctx context.Context, property *models.Property) error {
-	if property.ID == uuid.Nil {
-        return fmt.Errorf("cant save property without ID")
-	}
 	// TODO: Error handling
     return s.Repo.Save(ctx, property)
 }
@@ -43,6 +40,46 @@ func (s *PropertyService) DeleteProperty(ctx context.Context, id uuid.UUID) erro
 }
 
 func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
-	// TODO
-	return nil, errors.New("not implemented")
+	if filter.AreaMin > filter.AreaMax {
+		return nil, fmt.Errorf("invalid range: filter area ")
+	}
+	if filter.FloorMin > filter.FloorMax {
+		return nil, fmt.Errorf("invalid range: filter floor ")
+	}
+	if filter.RoomMin > filter.RoomMax {
+		return nil, fmt.Errorf("invalid range: filter room ")
+	}
+	if filter.BuildYearMin > filter.BuildYearMax {
+		return nil, fmt.Errorf("invalid range: filter build year ")
+	}
+	if filter.BuyPriceMin > filter.BuyPriceMax {
+		return nil, fmt.Errorf("invalid range: filter buy price ")
+	}
+	if filter.RentPriceMin > filter.RentPriceMax {
+		return nil, fmt.Errorf("invalid range: filter rent price ")
+	}
+	
+	return s.Repo.ListProperties(ctx, filter)
+}
+
+func (s *PropertyService) CreatePropertyByAdmin(ctx context.Context, property *models.Property) error {
+	userContextKey := "user"
+	user, ok := ctx.Value(userContextKey).(*models.User)
+	if !ok {
+		return fmt.Errorf("context has not user")
+	}
+	if !user.IsAdmin {
+		return fmt.Errorf("permission denied")
+	}
+	sourceType := "admin" // TODO: must be global variable
+	property.Source = sourceType
+	return s.Repo.Save(ctx, property)
+}
+
+func (s *PropertyService) CreatePropertyByCrawler(ctx context.Context, property *models.Property) error {
+	sourceType := "crawler" // TODO: must be global variable
+	if property.Source == "" {
+		property.Source = sourceType
+	}
+	return s.Repo.Save(ctx, property)
 }
