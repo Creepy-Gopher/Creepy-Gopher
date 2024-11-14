@@ -46,3 +46,23 @@ func handlerFloor(content string) (uint, error) {
 	}
 	return 0, err
 }
+
+func handlerArea(content string) (uint64, error) {
+	num, err := strconv.ParseUint(content, 10, 64)
+	if err == nil {
+		return uint64(uint(num)), nil
+	}
+	return 0, err
+}
+
+func hanldeNonConvertablePrices(content string) (uint64, error) {
+	parts := strings.Split(string(content), " ")
+	priceSTR := parts[0]
+	priceSTR = strings.ReplaceAll(priceSTR, "٬", "")
+	price, err := strconv.Atoi(priceSTR)
+	price /= 1000000
+	if err != nil {
+		return 0, err
+	}
+	return uint64(price), nil
+}
