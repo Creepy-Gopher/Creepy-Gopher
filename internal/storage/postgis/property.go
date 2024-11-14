@@ -11,51 +11,51 @@ import (
 )
 
 type propertyRepo struct {
-    DB *gorm.DB
+	DB *gorm.DB
 }
 
 func NewPropertyRepository(db *gorm.DB) storage.PropertyRepository {
-    return &propertyRepo{DB: db}
+	return &propertyRepo{DB: db}
 }
 
 func (r *propertyRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Property, error) {
-    var property models.Property
-    result := r.DB.WithContext(ctx).First(&property, id)
-    if result.Error != nil {
-        return nil, result.Error
-    }
-    return &property, nil
+	var property models.Property
+	result := r.DB.WithContext(ctx).First(&property, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &property, nil
 }
 
 func (r *propertyRepo) Save(ctx context.Context, entity *models.Property) error {
-    if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
-        return err
-    }
-    return nil
+	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // Update attributes with `struct`, will only update non-zero fields
 func (r *propertyRepo) Update(ctx context.Context, entity *models.Property) error {
-    result := r.DB.WithContext(ctx).Model(&models.Property{}).Updates(entity)
-    if result.Error != nil {
-        return result.Error
-    }
-    if result.RowsAffected == 0 {
-        return fmt.Errorf("no record found with ID %v", entity.ID)
-    }
-    return nil
+	result := r.DB.WithContext(ctx).Model(&models.Property{}).Updates(entity)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no record found with ID %v", entity.ID)
+	}
+	return nil
 }
 
 func (r *propertyRepo) Delete(ctx context.Context, id uuid.UUID) error {
-    property := models.Property{Model: models.Model{ID: id}}
-    result := r.DB.WithContext(ctx).Delete(&property, id)
-    if result.Error != nil {
-        return result.Error
-    }
-    if result.RowsAffected == 0 {
-        return fmt.Errorf("no record found with ID %v", id)
-    }
-    return nil
+	property := models.Property{Model: models.Model{ID: id}}
+	result := r.DB.WithContext(ctx).Delete(&property, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no record found with ID %v", id)
+	}
+	return nil
 }
 
 func (r *propertyRepo) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
@@ -135,7 +135,7 @@ func (r *propertyRepo) ListProperties(ctx context.Context, filter *models.Filter
 	// Filter by location
 	if filter.LocationLatitude != 0 && filter.LocationLongitude != 0 && filter.LocationRadius > 0 {
 		// query = query.Where(
-		// 	"ST_DWithin(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)", 
+		// 	"ST_DWithin(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)",
 		// 	filter.LocationLongitude, filter.LocationLatitude, filter.LocationRadius)
 	}
 
@@ -157,13 +157,13 @@ func (r *propertyRepo) ListProperties(ctx context.Context, filter *models.Filter
 }
 
 func (r *propertyRepo) GetPropertyByURL(ctx context.Context, url string) (*models.Property, error) {
-    var property models.Property
-    result := r.DB.WithContext(ctx).Where("ulr = ?", url).First(&property)
-    if result.Error != nil {
-        return nil, result.Error
-    }
-    if result.RowsAffected == 0 {
-        return nil, fmt.Errorf("no record found with URL %v", url)
-    }
-    return &property, nil
+	var property models.Property
+	result := r.DB.WithContext(ctx).Where("ulr = ?", url).First(&property)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, fmt.Errorf("no record found with URL %v", url)
+	}
+	return &property, nil
 }

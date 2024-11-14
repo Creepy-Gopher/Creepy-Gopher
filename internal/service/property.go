@@ -11,32 +11,41 @@ import (
 )
 
 type PropertyService struct {
-    Repo storage.PropertyRepository
+	Repo storage.PropertyRepository
 }
 
 func NewPropertyService(repo storage.PropertyRepository) *PropertyService {
-	// TODO: Error handling
-    return &PropertyService{Repo: repo}
+	return &PropertyService{Repo: repo}
 }
 
 func (s *PropertyService) CreateProperty(ctx context.Context, property *models.Property) error {
-	// TODO: Error handling
-    return s.Repo.Save(ctx, property)
+	if property.URL == "" {
+		return fmt.Errorf("URL field is empty")
+	}
+	return s.Repo.Save(ctx, property)
 }
 
 func (s *PropertyService) GetProperty(ctx context.Context, id uuid.UUID) (*models.Property, error) {
-    // TODO: Error handling
-    return s.Repo.GetByID(ctx, id)
+	return s.Repo.GetByID(ctx, id)
 }
 
 func (s *PropertyService) UpdateProperty(ctx context.Context, property *models.Property) error {
-	// TODO: Error handling
-	return s.Repo.Update(ctx, property)
+	_, err := s.GetProperty(ctx, property.ID)
+	if err == nil {
+		return s.Repo.Update(ctx, property)
+	} else {
+		return fmt.Errorf("this property id doesn't  exist")
+	}
 }
 
 func (s *PropertyService) DeleteProperty(ctx context.Context, id uuid.UUID) error {
-	// TODO: Error handling
-	return s.Repo.Delete(ctx, id)
+	_, err := s.GetProperty(ctx, id)
+	if err == nil {
+		return s.Repo.Delete(ctx, id)
+	} else {
+		return fmt.Errorf("invalid id")
+	}
+
 }
 
 func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
@@ -58,7 +67,7 @@ func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Fil
 	if filter.RentPriceMin > filter.RentPriceMax {
 		return nil, fmt.Errorf("invalid range: filter rent price ")
 	}
-	
+
 	return s.Repo.ListProperties(ctx, filter)
 }
 
@@ -66,20 +75,16 @@ func (s *PropertyService) CreatePropertyByAdmin(ctx context.Context, property *m
 	userContextKey := "user"
 	user, ok := ctx.Value(userContextKey).(*models.User)
 	if !ok {
-		return fmt.Errorf("context has not user")
+		return fmt.Errorf("context has not this user admin")
 	}
 	if !user.IsAdmin {
 		return fmt.Errorf("permission denied")
 	}
-	sourceType := "admin" // TODO: must be global variable
-	property.Source = sourceType
+	property.Source = "admin"
 	return s.Repo.Save(ctx, property)
 }
 
 func (s *PropertyService) CreatePropertyByCrawler(ctx context.Context, property *models.Property) error {
-	sourceType := "crawler" // TODO: must be global variable
-	if property.Source == "" {
-		property.Source = sourceType
-	}
+	property.Source = "crawler"
 	return s.Repo.Save(ctx, property)
 }
