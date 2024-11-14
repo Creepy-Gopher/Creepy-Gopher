@@ -4,6 +4,7 @@ import (
 	"creepy/internal/parser"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -13,13 +14,14 @@ import (
 
 // Constants for Selenium paths and settings
 const (
-	//seleniumPath    = "/home/selenium-server-4.26.0.jar"
-	geckoDriverPath = "./pkg/utils/firefoxdriver/geckodriver.exe"
+	seleniumPath    = "/home/selenium-server-4.26.0.jar"
+	geckoDriverPath = "/home/geckodriver"
 	port            = 4444
+	maxRetries      = 10 // حداکثر تعداد تلاش‌ها قبل از رفرش صفحه
 )
 
 // CrawlDivar crawls a specified category type with a maximum link count and returns a list of links.
-func crawlDivar(linkType parser.LinkType, maxLinks int) []string {
+func CrawlDivar(linkType parser.LinkType, maxLinks int) []string {
 	var categories map[string]string
 	parts := strings.Split(string(linkType), "_")
 	propertyType := parts[1]
@@ -42,7 +44,6 @@ func crawlDivar(linkType parser.LinkType, maxLinks int) []string {
 	results := make(chan []string, len(categories))
 	var crawledLinks []string
 
-	// Loop through categories and start a goroutine for each
 	for category, label := range categories {
 		wg.Add(1)
 		go func(category, label string) {
@@ -52,137 +53,138 @@ func crawlDivar(linkType parser.LinkType, maxLinks int) []string {
 		}(category, label)
 	}
 
-	// Wait for all goroutines to finish
 	wg.Wait()
 	close(results)
 
-	// Collect results from channel into a single list
 	for result := range results {
 		crawledLinks = append(crawledLinks, result...)
 	}
 
 	return crawledLinks
 }
+
 func customURLEncode(input string) string {
-	// ابتدا URL رو URL-encode می‌کنیم
 	encoded := url.QueryEscape(input)
-	// بعد از آن / و : رو به حالت اصلی خودشون برمی‌گردونیم
 	encoded = strings.ReplaceAll(encoded, "%2F", "/")
 	encoded = strings.ReplaceAll(encoded, "%3A", ":")
 	return encoded
 }
 
-// crawlCategory performs web crawling for a specific category and returns a list of links crawled
+func waitForPageLoad(wd selenium.WebDriver) error {
+	retries := 0
+	for {
+		state, err := wd.ExecuteScript("return document.readyState;", nil)
+		if err != nil {
+			return fmt.Errorf("error checking page load state: %v", err)
+		}
+
+		if state == "complete" {
+			return nil
+		}
+
+		retries++
+		if retries >= maxRetries {
+			// اگر بعد از 10 تلاش صفحه کامل لود نشد، رفرش می‌کنیم
+			fmt.Println("Page did not load completely after multiple attempts. Refreshing...")
+			if err := wd.Refresh(); err != nil {
+				return fmt.Errorf("error refreshing the page: %v", err)
+			}
+			retries = 0 // شمارشگر را ریست می‌کنیم
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 func crawlCategory(category, label string, maxLinks int) ([]string, error) {
-	// راه‌اندازی مستقیم GeckoDriver بدون نیاز به Selenium Server
-	service, err := selenium.NewGeckoDriverService(geckoDriverPath, port)
+	opts := []selenium.ServiceOption{
+		selenium.GeckoDriver(geckoDriverPath),
+	}
+	service, err := selenium.NewSeleniumService(seleniumPath, port, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("Error starting the GeckoDriver service: %v", err)
+		return nil, fmt.Errorf("Error starting the Selenium service: %v", err)
 	}
 	defer service.Stop()
 
-	// ایجاد یک جلسه WebDriver برای فایرفاکس
-	caps := selenium.Capabilities{"browserName": "firefox"}
+	caps := selenium.Capabilities{
+		"browserName": "firefox",
+		"moz:firefoxOptions": map[string]interface{}{
+			"args": []string{"-headless"},
+		},
+	}
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating new remote session: %v", err)
 	}
 	defer wd.Quit()
 
-	// Define URL based on the category and navigate to it
 	url := fmt.Sprintf("https://divar.ir/s/iran/%s", category)
 	if err := wd.Get(url); err != nil {
 		return nil, fmt.Errorf("Error navigating to page: %v", err)
 	}
 
-	//time.Sleep(2 * time.Second) // Wait for the page to load
+	if err := waitForPageLoad(wd); err != nil {
+		return nil, err
+	}
 
-	// Variables for tracking visited links and session state
 	visitedLinks := make(map[string]bool)
 	links := []string{}
 	count := 0
-	ticker := time.NewTicker(500 * time.Millisecond)   // Ticker to scroll the page periodically
-	noNewLinksTimer := time.NewTicker(5 * time.Second) // Timer for detecting if new links are found
-	defer ticker.Stop()
-	defer noNewLinksTimer.Stop()
 
-	lastLinkCount := 0          // Track last link count to detect no new links
-	refreshCount := 0           // Track page refresh count
-	moveToNextCategory := false // Flag to control when to move to the next category
+	for count < maxLinks {
+		_, err := wd.ExecuteScript("window.scrollBy(0, window.innerHeight);", nil)
+		if err != nil {
+			fmt.Println("Scrolling failed, refreshing page...")
+			if err := wd.Refresh(); err != nil {
+				return links, fmt.Errorf("Error refreshing the page: %v", err)
+			}
+			if err := waitForPageLoad(wd); err != nil {
+				return links, err
+			}
+			continue
+		}
 
-	for count < maxLinks && !moveToNextCategory {
-		select {
-		case <-ticker.C:
-			// Scroll the page down to load more content
-			_, err := wd.ExecuteScript("window.scrollBy(0, window.innerHeight / 2);", nil)
+		time.Sleep(2 * time.Second)
+
+		moreButton, err := wd.FindElement(selenium.ByXPATH, "//*[contains(text(), 'آگهی‌های بیشتر')]")
+		if err == nil {
+			fmt.Println("Found 'Show More' button, clicking to load more ads...")
+			_, err = wd.ExecuteScript("arguments[0].click();", []interface{}{moreButton})
 			if err != nil {
-				return links, fmt.Errorf("Error during scrolling: %v", err)
+				return links, fmt.Errorf("Error clicking 'Show More' button: %v", err)
 			}
-			time.Sleep(200 * time.Millisecond)
-
-			// Check if "Show More" button is available and click it
-			moreButton, err := wd.FindElement(selenium.ByXPATH, "//*[contains(text(), 'آگهی‌های بیشتر')]")
-			if err == nil {
-				_, err = wd.ExecuteScript("arguments[0].click();", []interface{}{moreButton})
-				if err != nil {
-					return links, fmt.Errorf("Error clicking 'Show More' button: %v", err)
-				}
-				time.Sleep(500 * time.Millisecond) // Wait for new content to load
-			}
-
-			// Find ad boxes on the page
-			adBoxes, err := wd.FindElements(selenium.ByCSSSelector, ".kt-post-card")
-			if err != nil {
-				continue // Skip if there was an error finding ad boxes
-			}
-
-			// Loop through each ad box to extract link
-			for _, adBox := range adBoxes {
-				var encodedLink string
-				// Try up to 3 times to retrieve the ad link
-				for retry := 0; retry < 3; retry++ {
-					linkElement, err := adBox.FindElement(selenium.ByCSSSelector, "a[href^='/v/']")
-					if err != nil {
-						continue // Retry if link is not found
-					}
-					href, err := linkElement.GetAttribute("href")
-					if err != nil {
-						time.Sleep(500 * time.Millisecond)
-						continue
-					}
-					encodedLink = customURLEncode("https://divar.ir" + href)
-
-					break
-				}
-
-				// Skip if the link is empty, already visited, or max links are reached
-				if encodedLink == "" || visitedLinks[encodedLink] || count >= maxLinks {
-					continue
-				}
-
-				// Add link to list and mark as visited
-				visitedLinks[encodedLink] = true
-				links = append(links, encodedLink)
-				count++
-			}
-
-		case <-noNewLinksTimer.C:
-			// Check if new links are found; if not, refresh the page or move to next category
-			if count == lastLinkCount {
-				if refreshCount >= 1 { // If already refreshed once, move to next category
-					moveToNextCategory = true
-					break
-				} else {
-					wd.Refresh() // Refresh the page if no new links were found
-					time.Sleep(2 * time.Second)
-					refreshCount++
-				}
-			} else {
-				lastLinkCount = count // Update last link count if new links are found
-				refreshCount = 0      // Reset refresh counter
+			time.Sleep(1 * time.Second)
+			if err := waitForPageLoad(wd); err != nil {
+				return links, err
 			}
 		}
+
+		pageSource, err := wd.PageSource()
+		if err != nil {
+			continue
+		}
+
+		re := regexp.MustCompile(`href="(/v/[^"]+)"`)
+		matches := re.FindAllStringSubmatch(pageSource, -1)
+
+		for _, match := range matches {
+			fullLink := customURLEncode("https://divar.ir" + match[1])
+
+			if fullLink == "" || visitedLinks[fullLink] {
+				continue
+			}
+
+			visitedLinks[fullLink] = true
+			links = append(links, fullLink)
+			count++
+			//fmt.Printf("New link found: %s\n", fullLink)
+			if count >= maxLinks {
+				break
+			}
+		}
+
+		//fmt.Printf("Number of links collected so far: %d\n", len(links))
 	}
 
-	return links, nil // Return list of links crawled if successful
+	return links, nil
 }
