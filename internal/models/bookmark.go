@@ -8,4 +8,5 @@ type Bookmark struct {
 	User       User     `gorm:"foreignKey:UserName"`
 	PropertyID uuid.UUID
 	Property   Property `gorm:"foreignKey:PropertyID"`
+	SharedWithMe bool
 }

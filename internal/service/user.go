@@ -13,7 +13,6 @@ type UserService struct {
 }
 
 func NewUserService(repo storage.UserRepository) *UserService {
-	// TODO: Error handling
     return &UserService{Repo: repo}
 }
 
