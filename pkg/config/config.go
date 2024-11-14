@@ -59,17 +59,28 @@ func NewConfig() *Config {
 	return cfg
 }
 
-// initLogger initializes the Zap logger
+// initLogger initializes the Zap logger to log to a file
 func initLogger() *zap.Logger {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	logger, err := config.Build()
+	// تعیین مسیر فایل لاگ
+	logFile := "application.log"
+	file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 
+	// تنظیم `zapcore` برای نوشتن لاگ‌ها در فایل
+	writer := zapcore.AddSync(file)
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(config.EncoderConfig), // فرمت لاگ‌ها به صورت JSON
+		writer,
+		zap.InfoLevel, // سطح لاگ (در صورت نیاز به تغییر سطح، اینجا را تغییر دهید)
+	)
+
+	logger := zap.New(core)
 	return logger
 }
 
