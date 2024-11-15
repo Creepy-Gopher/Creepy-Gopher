@@ -24,7 +24,7 @@ func init() {
 		{
 			UserName: "alex_jones",
 			IsPremium: false,
-			IsAdmin: false,
+			IsAdmin: true,
 		},
 	}
 }

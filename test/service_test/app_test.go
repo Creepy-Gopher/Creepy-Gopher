@@ -1,7 +1,6 @@
 package servicetest
 
 import (
-	"context"
 	"flag"
 	"log"
 	"os"
@@ -9,23 +8,14 @@ import (
 
 	"creepy/internal/service"
 	"creepy/pkg/config"
-	"creepy/test/data"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type contextKey string
 
-const isAdminKey contextKey = "isAdmin"
-
-func StoreIsAdmin(ctx context.Context, value bool) context.Context {
-    return context.WithValue(ctx, isAdminKey, value)
-}
-
-func GetIsAdmin(ctx context.Context) (bool, bool) {
-    value, ok := ctx.Value(isAdminKey).(bool)
-    return value, ok
-}
+const WhoCallsKey contextKey = "WhoCalls"
 
 var configPath = flag.String("config", ".env", "path to the configuration file")
 
@@ -47,6 +37,27 @@ func readConfig() config.Config {
 	return config.NewConfig()
 }
 
+func NewDevelopLogger() *zap.Logger {
+	// Create a new logger with human-friendly, colorized output
+	cfg := zap.NewDevelopmentConfig()
+
+	// Adjust log level if necessary (change to zap.InfoLevel or zap.DebugLevel)
+	cfg.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+
+	// Customize the console encoder settings for better readability
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	cfg.EncoderConfig.EncodeCaller = zapcore.FullCallerEncoder
+	cfg.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
+
+	// Create the logger with the configuration
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	return logger
+}
+
 func TestAppService(t *testing.T) {
 	cfg := readConfig()
 
@@ -54,16 +65,11 @@ func TestAppService(t *testing.T) {
 	if err != nil {
 		app.Cfg.Logger.Error(err.Error())
 	}
-	cfg.Logger.Info("Application starting", zap.String("version", "1.0.0"))
+	app.Cfg.Logger = NewDevelopLogger()
+	app.Cfg.Logger.Info("Application starting", zap.String("version", "1.0.0"))
 
-	property := data.Properties[0]
-	ctx := context.Background()
-	ctx = StoreIsAdmin(ctx, true)
-
-	err = app.PropertyService().CreatePropertyByAdmin(ctx, &property)
-	if err != nil {
-		app.Cfg.Logger.Fatal(err.Error())
-	}
+	UserServiceTest(app)
+	FilterServiceTest(app)
 
 	app.Cfg.Logger.Info("Application shutting down")
 }

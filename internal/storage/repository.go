@@ -30,6 +30,8 @@ type FilterRepository interface {
 type UserRepository interface {
     Repository[models.User]
     GetByUserName(ctx context.Context, userName string) (*models.User, error)
+    GetAllUsers(ctx context.Context) ([]models.User, error)
+    DeleteAllSoftDeletedUsers(ctx context.Context) error
 }
 
 type BookmarkRepository interface {

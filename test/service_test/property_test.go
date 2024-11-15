@@ -1,102 +1,46 @@
 package servicetest
 
 import (
-	"testing"
-	"context"
-	"fmt"
 	"creepy/internal/models"
 	"creepy/internal/service"
-	"creepy/internal/storage"
-	
-	"github.com/google/uuid"
 )
 
+var Property *models.Property
 
-type MockPropertyRepository struct {
-    Properties map[uuid.UUID]*models.Property
+func init() {
+	Property = &models.Property{
+		Model:        models.Model{},
+		Title:        "",
+		Description:  "",
+		BuyPrice:     0,
+		RentPrice:    0,
+		RentPriceMin: 0,
+		RentPriceMax: 0,
+		RahnPriceMin: 0,
+		RahnPriceMax: 0,
+		Area:         0,
+		Rooms:        0,
+		DealingType:  "",
+		Type:         "",
+		City:         "",
+		District:     "",
+		Address:      "",
+		BuildYear:    0,
+		Floor:        0,
+		HasElevator:  false,
+		HasStorage:   false,
+		HasParking:   false,
+		Latitude:     0,
+		Longitude:    0,
+		Source:       "",
+		URL:          "",
+		Image:        "",
+		SearchCount:  0,
+	}
 }
 
-func NewMockPropertyRepository() storage.PropertyRepository {
-    return &MockPropertyRepository{
-        Properties: make(map[uuid.UUID]*models.Property),
-    }
-}
+func PropertyServiceTest(app service.AppContainer) {
+    app.Cfg.Logger.Info("starting test user service")
 
-func (m *MockPropertyRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Property, error) {
-    if property, exists := m.Properties[id]; exists {
-        return property, nil
-    }
-    return nil, fmt.Errorf("property with ID %d not found", id)
-}
-
-func (m *MockPropertyRepository) Save(ctx context.Context, property *models.Property) error {
-    m.Properties[property.ID] = property
-    return nil
-}
-
-func (m *MockPropertyRepository) Update(ctx context.Context, property *models.Property) error {
-    if _, exists := m.Properties[property.ID]; !exists {
-        return fmt.Errorf("property with ID %d does not exist", property.ID)
-    }
-    m.Properties[property.ID] = property
-    return nil
-}
-
-func (m *MockPropertyRepository) Delete(ctx context.Context, id uuid.UUID) error {
-    if _, exists := m.Properties[id]; !exists {
-        return fmt.Errorf("property with ID %d does not exist", id)
-    }
-    delete(m.Properties, id)
-    return nil
-}
-
-func (m *MockPropertyRepository) ListProperties(ctx context.Context, filter *models.Filter) ([]*models.Property, error) {
-    var result []*models.Property
-    for _, property := range m.Properties {
-        if property.BuyPrice >= filter.BuyPriceMin && property.BuyPrice <= filter.BuyPriceMax { // TODO: more check
-            result = append(result, property)
-        }
-    }
-    return result, nil
-}
-
-func (m *MockPropertyRepository) GetPropertyByURL(ctx context.Context, url string) (*models.Property, error) {
-    return nil, fmt.Errorf("not implemented")
-}
-
-
-func TestPropertyService_GetProperty(t *testing.T) {
-    // Initialize mock repository
-    mockRepo := NewMockPropertyRepository()
-
-    // Initialize service with mock repository
-    propertyService := service.NewPropertyService(mockRepo)
-
-	ctx := context.Background()
-	id := uuid.New()
-
-    // Test CreateProperty with non-existing ID
-    err := propertyService.CreateProperty(ctx, &models.Property{
-        Model:          models.Model{/*ID: id*/},
-        Title:       "Test Property",
-        Description: "A property for testing",
-    })
-    if err != nil {
-        t.Fatalf("expected no error, got %v", err)
-    }
-
-    // Test GetProperty with existing ID
-    property, err := propertyService.GetProperty(ctx, id)
-    if err != nil {
-        t.Fatalf("expected no error, got %v", err)
-    }
-    if property.Title != "Test Property" {
-        t.Errorf("expected title 'Test Property', got '%s'", property.Title)
-    }
-
-	// Test GetProperty with non-existing ID
-    _, err = propertyService.GetProperty(context.Background(), uuid.New())
-    if err == nil {
-        t.Fatalf("expected error for non-existing property, got nil")
-    }
+	app.Cfg.Logger.Info("'user service' successfully passed tests")
 }

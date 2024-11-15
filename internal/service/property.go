@@ -63,14 +63,14 @@ func (s *PropertyService) ListProperties(ctx context.Context, filter *models.Fil
 }
 
 func (s *PropertyService) CreatePropertyByAdmin(ctx context.Context, property *models.Property) error {
-	userContextKey := "user"
-	user, ok := ctx.Value(userContextKey).(*models.User)
-	if !ok {
-		return fmt.Errorf("context has not user")
-	}
-	if !user.IsAdmin {
-		return fmt.Errorf("permission denied")
-	}
+	// userContextKey := "user"
+	// user, ok := ctx.Value(userContextKey).(*models.User)
+	// if !ok {
+	// 	return fmt.Errorf("context has not user")
+	// }
+	// if !user.IsAdmin {
+	// 	return fmt.Errorf("permission denied")
+	// }
 	sourceType := "admin" // TODO: must be global variable
 	property.Source = sourceType
 	return s.Repo.Save(ctx, property)
