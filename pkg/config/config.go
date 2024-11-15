@@ -50,11 +50,16 @@ func NewConfig() Config {
 	return cfg
 }
 
-// initLogger initializes the Zap logger
+// initLogger initializes the Zap logger to log to a file
 func initLogger() *zap.Logger {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
-	//config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.OutputPaths = []string{"logs/app.log"} // Specify log file path
+
+	// Ensure the logs directory exists, create it if not.
+	if err := os.MkdirAll("logs", os.ModePerm); err != nil {
+		panic("failed to create logs directory: " + err.Error())
+	}
 
 	logger, err := config.Build()
 	if err != nil {
