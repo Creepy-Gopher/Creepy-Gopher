@@ -31,7 +31,7 @@ func UserServiceTest(app *service.AppContainer) {
 	}
 
 	// Test User Exist (User should exist now)
-	exist, _ := app.UserService().UserExist(ctx, user.UserName)
+	exist := app.UserService().UserExist(ctx, user.UserName)
 	if !exist {
 		app.Cfg.Logger.Error(fmt.Sprintf("User '%v' should exist", user.UserName))
 	}
@@ -41,7 +41,7 @@ func UserServiceTest(app *service.AppContainer) {
 	if err != nil || fetchedUser == nil || fetchedUser.UserName != user.UserName {
 		app.Cfg.Logger.Error(fmt.Sprintf("Failed to fetch user by UserName: %v", err))
 	}
-
+	app.Cfg.Logger.Info(fetchedUser.UserName)
 	// Now the user ID is populated from the fetched user
 	userID := fetchedUser.ID
 
@@ -71,8 +71,8 @@ func UserServiceTest(app *service.AppContainer) {
 	}
 
 	// Test User Exist (Deleted User should not exist)
-	exist, err = app.UserService().UserExist(ctx, user.UserName)
-	if err != nil || exist {
+	exist = app.UserService().UserExist(ctx, user.UserName)
+	if exist {
 		app.Cfg.Logger.Error(fmt.Sprintf("User '%v' should not exist after deletion, but got error: %v", user.UserName, err))
 	}
 

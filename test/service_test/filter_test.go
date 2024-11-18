@@ -5,6 +5,7 @@ import (
 	"creepy/internal/models"
 	"creepy/internal/service"
 	"fmt"
+	"testing"
 )
 
 var filter *models.Filter
@@ -71,4 +72,15 @@ func FilterServiceTest(app *service.AppContainer) {
 	app.Cfg.Logger.Info(fmt.Sprintf("filter whit id: %v deleted", id))
 
 	app.Cfg.Logger.Info("'filter service' successfully passed tests")
+}
+
+
+func TestFilterService(t *testing.T) {
+	cfg := readConfig()
+	cfg.Logger = NewDevelopLogger()
+	app, err := service.NewAppContainer(cfg)
+	if err != nil {
+		app.Cfg.Logger.Fatal(err.Error())
+	}
+	FilterServiceTest(app)
 }

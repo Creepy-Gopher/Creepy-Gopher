@@ -38,13 +38,9 @@ func (s *UserService) GetByUserName(ctx context.Context, userName string) (*mode
     return s.Repo.GetByUserName(ctx, userName)
 }
 
-// check user exist in db, UseCase: before create user
-func (s *UserService) UserExist(ctx context.Context, userName string) (bool, error) {
+func (s *UserService) UserExist(ctx context.Context, userName string) bool {
 	_, err := s.GetByUserName(ctx, userName)
-	if err != nil || err != gorm.ErrRecordNotFound{
-		return false, err
-	}
-	return true, nil
+	return err != gorm.ErrRecordNotFound
 }
 
 func (s *UserService) AllUsers(ctx context.Context) ([]models.User, error) {
