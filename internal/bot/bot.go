@@ -22,6 +22,11 @@ type Bot struct {
 	userService     *service.UserService
 	filterService   *service.FilterService
 	logger          *zap.Logger // Zap logger for logging events and errors
+
+	mainMenu       *tele.ReplyMarkup
+	filtersMenu    *tele.ReplyMarkup
+	propertyMenu   *tele.ReplyMarkup
+	managementMenu *tele.ReplyMarkup
 }
 
 // NewBot creates a new instance of the Telegram bot
@@ -29,7 +34,7 @@ func NewBot(cfg *config.Config, app *service.AppContainer, logger *zap.Logger) (
 	// Retrieve the bot token from the configuration
 	token := cfg.Telegram.BotToken
 	if token == "" {
-		return nil, fmt.Errorf("توکن بات تلگرام تنظیم نشده است")
+		return nil, fmt.Errorf("Token is null")
 	}
 
 	// Setup bot settings with polling timeout
@@ -65,92 +70,164 @@ func (b *Bot) Start() {
 // initializeHandlers sets up all bot command handlers and main menu
 func (b *Bot) initializeHandlers() {
 	// Create main menu
-	mainMenu := &tele.ReplyMarkup{ResizeKeyboard: true}
-	btnSearch := mainMenu.Text("🔍 Search")
-	btnFilters := mainMenu.Text("⚙️ Filters")
-	btnBookmarks := mainMenu.Text("⭐️ Bookmarks")
-	btnProfile := mainMenu.Text("👤 Profile")
-	btnProperty := mainMenu.Text("🏘️ Property")
+	b.mainMenu = &tele.ReplyMarkup{ResizeKeyboard: true}
+	btnSearch := b.mainMenu.Text("🔍 Search")
+	btnFilters := b.mainMenu.Text("⚙️ Filters")
+	btnBookmarks := b.mainMenu.Text("⭐️ Bookmarks")
+	btnProfile := b.mainMenu.Text("👤 Profile")
+	btnProperty := b.mainMenu.Text("🏘️ Property")
+	btnManagement := b.mainMenu.Text("🔧 Management")
 
-	mainMenu.Reply(
-		mainMenu.Row(btnSearch, btnFilters),
-		mainMenu.Row(btnBookmarks, btnProfile),
-		mainMenu.Row(btnProperty),
+	b.mainMenu.Reply(
+		b.mainMenu.Row(btnSearch, btnFilters),
+		b.mainMenu.Row(btnBookmarks, btnProfile),
+		b.mainMenu.Row(btnProperty),
+		b.mainMenu.Row(btnManagement),
+	)
+
+	// Create filters menu
+	b.filtersMenu = &tele.ReplyMarkup{ResizeKeyboard: true}
+	btnCreateFilter := b.filtersMenu.Text("➕ Create Filter")
+	btnViewFilter := b.filtersMenu.Text("👁 View Filter")
+	btnUpdateFilter := b.filtersMenu.Text("✏️ Update Filter")
+	btnDeleteFilter := b.filtersMenu.Text("🗑 Delete Filter")
+	btnFiltersBack := b.filtersMenu.Text("🔙 Back")
+
+	b.filtersMenu.Reply(
+		b.filtersMenu.Row(btnCreateFilter, btnViewFilter),
+		b.filtersMenu.Row(btnUpdateFilter, btnDeleteFilter),
+		b.filtersMenu.Row(btnFiltersBack),
+	)
+
+	// Create property menu
+	b.propertyMenu = &tele.ReplyMarkup{ResizeKeyboard: true}
+	btnAddProperty := b.propertyMenu.Text("➕ Add Property")
+	btnMyProperties := b.propertyMenu.Text("📄 My Properties")
+	btnPropertyBack := b.propertyMenu.Text("🔙 Back")
+
+	b.propertyMenu.Reply(
+		b.propertyMenu.Row(btnAddProperty, btnMyProperties),
+		b.propertyMenu.Row(btnPropertyBack),
+	)
+
+	// Create management menu
+	b.managementMenu = &tele.ReplyMarkup{ResizeKeyboard: true}
+	btnAddUser := b.managementMenu.Text("➕ Add User")
+	btnViewUsers := b.managementMenu.Text("👥 View Users")
+	btnManagementBack := b.managementMenu.Text("🔙 Back")
+
+	b.managementMenu.Reply(
+		b.managementMenu.Row(btnAddUser, btnViewUsers),
+		b.managementMenu.Row(btnManagementBack),
 	)
 
 	// Start command handler
 	b.bot.Handle("/start", func(c tele.Context) error {
 		b.logger.Info("User started the bot", zap.Int64("UserID", c.Sender().ID))
-		return c.Send("👋 Welcome to the Real Estate Bot! Please select an option:", mainMenu)
+		return c.Send("👋 Welcome to the Creepy-Gopher Bot! Please select an option:", b.mainMenu)
 	})
 
-	// Search handler
-	b.bot.Handle("🔍 Search", b.handleSearch())
-	// Filters handler
-	b.bot.Handle("⚙️ Filters", b.handleFilters(mainMenu))
+	// Main menu handlers
+	b.bot.Handle(&btnSearch, b.handleSearch())
+	b.bot.Handle(&btnFilters, b.handleFilters())
 	// Bookmarks handler
-	//b.bot.Handle("⭐️ Bookmarks", b.handleBookmarks())
+	// b.bot.Handle(&btnBookmarks, b.handleBookmarks())
 	// Profile handler
-	//b.bot.Handle("👤 Profile", b.handleProfile())
-	// Add property handler
-	b.bot.Handle("Property", b.handleProperty(mainMenu))
+	b.bot.Handle(&btnProfile, b.handleProfile())
+	b.bot.Handle(&btnProperty, b.handleProperty())
+	b.bot.Handle(&btnManagement, b.handleManagement())
 
+	// Filters menu handlers
+	b.bot.Handle(&btnCreateFilter, b.handleCreateFilter())
+	b.bot.Handle(&btnViewFilter, b.handleListFilters())
+	b.bot.Handle(&btnUpdateFilter, b.handleUpdateFilter())
+	b.bot.Handle(&btnDeleteFilter, b.handleDeleteFilter())
+	b.bot.Handle(&btnFiltersBack, func(c tele.Context) error {
+		return c.Send("Returning to the main menu:", b.mainMenu)
+	})
+
+	// Property menu handlers
+	b.bot.Handle(&btnAddProperty, b.handleAddProperty())
+	b.bot.Handle(&btnMyProperties, b.handleUserProperties())
+	b.bot.Handle(&btnPropertyBack, func(c tele.Context) error {
+		return c.Send("Returning to the main menu:", b.mainMenu)
+	})
+
+	// Management menu handlers
+	b.bot.Handle(&btnAddUser, b.handleAddUser())
+	// b.bot.Handle(&btnViewUsers, b.handleViewUsers())
+	b.bot.Handle(&btnManagementBack, func(c tele.Context) error {
+		return c.Send("Returning to the main menu:", b.mainMenu)
+	})
 }
 
-// Filters menu with "Back" and "Create Filter" button handler
-func (b *Bot) handleProperty(mainMenu *tele.ReplyMarkup) tele.HandlerFunc {
+var telegramNamespaceUUID = uuid.MustParse("12345678-1234-5678-1234-567812345678")
+
+func UUIDFromTelegramID(telegramID int64) uuid.UUID {
+	telegramIDStr := strconv.FormatInt(telegramID, 10)
+	return uuid.NewSHA1(telegramNamespaceUUID, []byte(telegramIDStr))
+}
+
+// handleManagement manages the super admin functionalities
+func (b *Bot) handleManagement() tele.HandlerFunc {
 	return func(c tele.Context) error {
-		filtersMenu := &tele.ReplyMarkup{ResizeKeyboard: true}
-		btnAddProperty := mainMenu.Text("➕ Add Property")
-		btnMyProperties := mainMenu.Text("📄 My Properties")
-		btnBack := filtersMenu.Text("🔙 Back")
+		telegramID := c.Sender().ID
+		userUUID := UUIDFromTelegramID(telegramID)
+		fmt.Print(userUUID)
+		user, err := b.userService.GetUser(context.Background(), userUUID)
+		if err != nil || !user.IsAdmin {
+			return c.Send("You do not have access to this menu.")
+		}
 
-		filtersMenu.Reply(
-			filtersMenu.Row(btnAddProperty, btnMyProperties),
-			filtersMenu.Row(btnBack),
-		)
+		return c.Send("Super Admin Management:", b.managementMenu)
+	}
+}
 
-		// Set up handlers for properties actions
-		b.bot.Handle("➕ Add Property", b.handleAddProperty())
-		b.bot.Handle("📄 My Properties", b.handleUserProperties())
+// handleAddUser adds a new user by Telegram ID
+func (b *Bot) handleAddUser() tele.HandlerFunc {
+	return func(c tele.Context) error {
+		b.logger.Info("Admin is adding a new user", zap.Int64("AdminID", c.Sender().ID))
 
-		// Handle "Back" button to return to main menu
-		b.bot.Handle(&btnBack, func(c tele.Context) error {
-			return c.Send("Returning to the main menu:", mainMenu)
-		})
+		// Prompt for Telegram User ID
+		if !b.getUserInput(c, "Enter the Telegram User ID of the new admin user:", func(input string) {
 
-		return c.Send("Please select a filter action:", filtersMenu)
+			_, err := strconv.ParseInt(input, 10, 64)
+			if err != nil {
+				c.Send("Invalid Telegram ID.")
+				return
+			}
+			user := &models.User{
+				UserName:  input,
+				IsPremium: false,
+				IsAdmin:   true,
+			}
+			err = b.userService.CreateUser(context.Background(), user)
+			if err != nil {
+				b.logger.Error("Failed to add new admin user", zap.Error(err))
+				c.Send("Failed to create user.")
+			} else {
+				c.Send("User added successfully.")
+			}
+		}) {
+			return c.Send("Error receiving user ID.")
+		}
+		return nil
 	}
 }
 
 // Filters menu with "Back" and "Create Filter" button handler
-func (b *Bot) handleFilters(mainMenu *tele.ReplyMarkup) tele.HandlerFunc {
+func (b *Bot) handleProperty() tele.HandlerFunc {
 	return func(c tele.Context) error {
-		filtersMenu := &tele.ReplyMarkup{ResizeKeyboard: true}
-		btnCreateFilter := filtersMenu.Text("➕ Create Filter")
-		btnViewFilter := filtersMenu.Text("👁 View Filter")
-		btnUpdateFilter := filtersMenu.Text("✏️ Update Filter")
-		btnDeleteFilter := filtersMenu.Text("🗑 Delete Filter")
-		btnBack := filtersMenu.Text("🔙 Back")
+		b.logger.Info("User accessed Property menu", zap.Int64("UserID", c.Sender().ID))
+		return c.Send("Please select a property action:", b.propertyMenu)
+	}
+}
 
-		filtersMenu.Reply(
-			filtersMenu.Row(btnCreateFilter, btnViewFilter),
-			filtersMenu.Row(btnUpdateFilter, btnDeleteFilter),
-			filtersMenu.Row(btnBack),
-		)
-
-		// Set up handlers for filter actions
-		b.bot.Handle(&btnCreateFilter, b.handleCreateFilter()) // New create filter handler
-		b.bot.Handle(&btnViewFilter, b.handleListFilters())
-		b.bot.Handle(&btnUpdateFilter, b.handleUpdateFilter())
-		b.bot.Handle(&btnDeleteFilter, b.handleDeleteFilter())
-
-		// Handle "Back" button to return to main menu
-		b.bot.Handle(&btnBack, func(c tele.Context) error {
-			return c.Send("Returning to the main menu:", mainMenu)
-		})
-
-		return c.Send("Please select a filter action:", filtersMenu)
+// Filters menu with "Back" and "Create Filter" button handler
+func (b *Bot) handleFilters() tele.HandlerFunc {
+	return func(c tele.Context) error {
+		b.logger.Info("User accessed Filters menu", zap.Int64("UserID", c.Sender().ID))
+		return c.Send("Please select a filter action:", b.filtersMenu)
 	}
 }
 
@@ -158,23 +235,24 @@ func (b *Bot) handleFilters(mainMenu *tele.ReplyMarkup) tele.HandlerFunc {
 func (b *Bot) handleCreateFilter() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User started creating a new filter", zap.Int64("UserID", c.Sender().ID))
-		// دریافت فیلدهای فیلتر از کاربر
+		// Collect filter fields from the user
 		filter := &models.Filter{}
 
-		// Example: دریافت محدوده قیمت
+		// Example: Get minimum price
 		if !b.getUserInput(c, "Please enter the minimum price for the filter:", func(input string) {
 			priceMin, _ := strconv.ParseUint(input, 10, 64)
 			filter.BuyPriceMin = priceMin
 		}) {
 			return c.Send("Error receiving minimum price.")
 		}
+		// Example: Get maximum price
 		if !b.getUserInput(c, "Please enter the maximum price for the filter:", func(input string) {
 			priceMax, _ := strconv.ParseUint(input, 10, 64)
 			filter.BuyPriceMax = priceMax
 		}) {
 			return c.Send("Error receiving maximum price.")
 		}
-		// ذخیره فیلتر جدید
+		// Save the new filter
 		if err := b.filterService.CreateFilter(context.Background(), filter); err != nil {
 			b.logger.Error("Failed to save filter", zap.Error(err))
 			return c.Send("Error saving the filter: " + err.Error())
@@ -189,9 +267,14 @@ func (b *Bot) handleCreateFilter() tele.HandlerFunc {
 func (b *Bot) handleListFilters() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User requested filter list", zap.Int64("UserID", c.Sender().ID))
-		userID := uuid.New() // Example, replace with actual user identifier
+		userIDStr := strconv.FormatInt(c.Sender().ID, 10)
+		userUUID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			b.logger.Error("Failed to parse user ID", zap.Error(err))
+			return c.Send("Error retrieving filters.")
+		}
 
-		filter, err := b.filterService.GetFilter(context.Background(), userID)
+		filter, err := b.filterService.GetFilter(context.Background(), userUUID)
 		if err != nil {
 			b.logger.Error("Failed to fetch user filters", zap.Error(err))
 			return c.Send("No filters found. Please create a new filter.")
@@ -206,9 +289,14 @@ func (b *Bot) handleListFilters() tele.HandlerFunc {
 func (b *Bot) handleUpdateFilter() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User requested filter update", zap.Int64("UserID", c.Sender().ID))
-		userID := uuid.New() // Example, replace with actual user identifier
+		userIDStr := strconv.FormatInt(c.Sender().ID, 10)
+		userUUID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			b.logger.Error("Failed to parse user ID", zap.Error(err))
+			return c.Send("Error updating the filter.")
+		}
 
-		filter, err := b.filterService.GetFilter(context.Background(), userID)
+		filter, err := b.filterService.GetFilter(context.Background(), userUUID)
 		if err != nil {
 			b.logger.Error("Failed to fetch user filter for update", zap.Error(err))
 			return c.Send("No filter found to update.")
@@ -231,9 +319,14 @@ func (b *Bot) handleUpdateFilter() tele.HandlerFunc {
 func (b *Bot) handleDeleteFilter() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User requested filter deletion", zap.Int64("UserID", c.Sender().ID))
-		userID := uuid.New() // Example, replace with actual user identifier
+		userIDStr := strconv.FormatInt(c.Sender().ID, 10)
+		userUUID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			b.logger.Error("Failed to parse user ID", zap.Error(err))
+			return c.Send("Error deleting the filter.")
+		}
 
-		if err := b.filterService.DeleteFilter(context.Background(), userID); err != nil {
+		if err := b.filterService.DeleteFilter(context.Background(), userUUID); err != nil {
 			b.logger.Error("Failed to delete filter", zap.Error(err))
 			return c.Send("Error deleting the filter.")
 		}
@@ -242,26 +335,26 @@ func (b *Bot) handleDeleteFilter() tele.HandlerFunc {
 	}
 }
 
-// در متد handleSearch
+// handleSearch handles the property search based on user filters
 func (b *Bot) handleSearch() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User requested property search", zap.Int64("UserID", c.Sender().ID))
 
-		// تبدیل c.Sender().ID به رشته و سپس UUID
-		userUUID, err := uuid.NewUUID() // ایجاد UUID تصادفی برای شناسه
+		userIDStr := strconv.FormatInt(c.Sender().ID, 10)
+		userUUID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			b.logger.Error("Failed to generate UUID", zap.Error(err))
+			b.logger.Error("Failed to parse user ID", zap.Error(err))
 			return c.Send("Error generating user identifier.")
 		}
 
-		// دریافت فیلتر ذخیره شده کاربر از سرویس با UUID
+		// Get the user's saved filter
 		filter, err := b.filterService.GetFilter(context.Background(), userUUID)
 		if err != nil {
 			b.logger.Error("Failed to fetch user filter", zap.Error(err))
 			return c.Send("Error fetching filters. Please set up your filters first.")
 		}
 
-		// جستجوی آگهی ها با استفاده از فیلتر کاربر
+		// Search properties using the user's filter
 		properties, err := b.propertyService.ListProperties(context.Background(), filter)
 		if err != nil {
 			b.logger.Error("Failed to list properties", zap.Error(err))
@@ -280,42 +373,21 @@ func (b *Bot) handleSearch() tele.HandlerFunc {
 	}
 }
 
-// handleBookmarks shows the list of bookmarks for the user
-// func (b *Bot) handleBookmarks() tele.HandlerFunc {
-// 	return func(c tele.Context) error {
-// 		b.logger.Info("User viewed bookmarks", zap.Int64("UserID", c.Sender().ID))
-// 		bookmarks, err := b.userService.GetBookmarks(context.Background(), c.Sender().ID)
-// 		if err != nil {
-// 			b.logger.Error("Failed to fetch bookmarks", zap.Error(err))
-// 			return c.Send("Error fetching bookmarks.")
-// 		}
-// 		for _, bookmark := range bookmarks {
-// 			c.Send(fmt.Sprintf("Property: %s\nDescription: %s", bookmark.Title, bookmark.Description))
-// 		}
-// 		return nil
-// 	}
-// }
-
 // handleProfile shows the user's profile information
 func (b *Bot) handleProfile() tele.HandlerFunc {
 	return func(c tele.Context) error {
 		b.logger.Info("User viewed profile", zap.Int64("UserID", c.Sender().ID))
 
-		// Convert int64 ID to string, then to UUID
-		userIDStr := strconv.FormatInt(c.Sender().ID, 10)
-		userID, err := uuid.Parse(userIDStr)
-		if err != nil {
-			b.logger.Error("Failed to parse user ID to UUID", zap.Error(err))
-			return c.Send("Error retrieving profile information.")
-		}
+		telegramID := c.Sender().ID
+		userUUID := UUIDFromTelegramID(telegramID)
 
-		user, err := b.userService.GetUser(context.Background(), userID)
+		user, err := b.userService.GetUser(context.Background(), userUUID)
 		if err != nil {
 			b.logger.Error("Failed to fetch user profile", zap.Error(err))
 			return c.Send("Error fetching profile information.")
 		}
 
-		return c.Send(fmt.Sprintf("Profile Information:\nUsername: %s\n", user.UserName)) //user.UserRole?!
+		return c.Send(fmt.Sprintf("Profile Information:\nUsername: %v\nIsAdmin: %v\nIsPremium: %v\n", user.UserName, user.IsAdmin, user.IsPremium))
 	}
 }
 
