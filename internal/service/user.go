@@ -11,7 +11,7 @@ import (
 )
 
 type UserService struct {
-    Repo storage.UserRepository
+	Repo storage.UserRepository
 }
 
 func NewUserService(repo storage.UserRepository) *UserService {
