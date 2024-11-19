@@ -9,11 +9,12 @@ import (
 )
 
 type AppContainer struct {
-	Cfg                 config.Config
-	DbConn              *gorm.DB
-	propertyService		*PropertyService
-	userService			*UserService
-	filterService 		*FilterService
+	Cfg             config.Config
+	DbConn          *gorm.DB
+	propertyService *PropertyService
+	userService     *UserService
+	filterService   *FilterService
+	bookmarkService *BookmarkService
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -26,6 +27,8 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 	app.setPropertyService()
 	app.setUserService()
 	app.setFilterService()
+	app.setBookmarkService()
+
 	return app, nil
 }
 
@@ -56,7 +59,6 @@ func (a *AppContainer) mustInitDB() {
 	}
 }
 
-
 func (a *AppContainer) PropertyService() *PropertyService {
 	return a.propertyService
 }
@@ -65,8 +67,7 @@ func (a *AppContainer) setPropertyService() {
 	if a.propertyService != nil {
 		return
 	}
-	a.propertyService = NewPropertyService(postgis.NewPropertyRepository(a.DbConn),
-	)
+	a.propertyService = NewPropertyService(postgis.NewPropertyRepository(a.DbConn))
 }
 
 func (a *AppContainer) UserService() *UserService {
@@ -86,11 +87,22 @@ func (a *AppContainer) FilterService() *FilterService {
 	return a.filterService
 }
 
-func (a *AppContainer) setFilterService(){
+func (a *AppContainer) setFilterService() {
 	if a.filterService != nil {
 		return
 	}
 	a.filterService = NewFilterService(
 		postgis.NewFilterRepo(a.DbConn),
 	)
+}
+
+func (a *AppContainer) BookmarkService() *BookmarkService {
+	return a.bookmarkService
+}
+
+func (a *AppContainer) setBookmarkService() {
+	if a.bookmarkService != nil {
+		return
+	}
+	a.bookmarkService = NewBookmarkService(postgis.NewBookmarkRepository(a.DbConn), postgis.NewPropertyRepository(a.DbConn))
 }
