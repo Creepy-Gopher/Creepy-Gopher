@@ -39,14 +39,14 @@ func (r *bookmarkRepo) DeleteBookmard(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// func (r *bookmarkRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Bookmark, error) {
-//     var bookmark models.Bookmark
-//     result := r.DB.WithContext(ctx).First(&bookmark, id)
-//     if result.Error != nil {
-//         return nil, result.Error
-//     }
-//     return &bookmark, nil
-// }
+func (r *bookmarkRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Bookmark, error) {
+	var bookmark models.Bookmark
+	result := r.DB.WithContext(ctx).First(&bookmark, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &bookmark, nil
+}
 
 // func (r *bookmarkRepo) Save(ctx context.Context, entity *models.Bookmark) error {
 //     	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
