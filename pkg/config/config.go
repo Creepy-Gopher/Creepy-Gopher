@@ -94,7 +94,7 @@ func NewDBConfig() DBConfig {
 // NewTelegramConfig initializes a new TelegramConfig instance from environment variables
 func NewTelegramConfig() TelegramConfig {
 	return TelegramConfig{
-		BotToken: getEnv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN"),
+		BotToken: getEnv("TELEGRAM_BOT_TOKEN", "8196883587:AAH9gp-uA_AbMOHmzOFx2uSZSM2u0F7IqG8"),
 	}
 }
 

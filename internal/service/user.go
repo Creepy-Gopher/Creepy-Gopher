@@ -9,22 +9,22 @@ import (
 )
 
 type UserService struct {
-    Repo storage.UserRepository
+	Repo storage.UserRepository
 }
 
 func NewUserService(repo storage.UserRepository) *UserService {
 	// TODO: Error handling
-    return &UserService{Repo: repo}
+	return &UserService{Repo: repo}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	// TODO: Error handling
-    return s.Repo.Save(ctx, user)
+	return s.Repo.Save(ctx, user)
 }
 
 func (s *UserService) GetUser(ctx context.Context, id uuid.UUID) (*models.User, error) {
-    // TODO: Error handling
-    return s.Repo.GetByID(ctx, id)
+	// TODO: Error handling
+	return s.Repo.GetByID(ctx, id)
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
