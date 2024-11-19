@@ -58,3 +58,16 @@ func (r *userSearchHistoryRepo) Delete(ctx context.Context, id uuid.UUID) error 
     }
     return nil
 }
+
+
+func (r *userSearchHistoryRepo) ListSearchHistoryByUserName(ctx context.Context, userName string) ([]*models.UserSearchHistory, error) {
+    var searchHistory []*models.UserSearchHistory
+    result := r.DB.WithContext(ctx).Where("user_name = ?", userName).Find(searchHistory)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    if result.RowsAffected == 0 {
+        return nil, fmt.Errorf("no record found with user_name %v", userName)
+    }
+    return searchHistory, nil
+}

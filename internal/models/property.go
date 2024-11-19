@@ -26,6 +26,6 @@ type Property struct {
 	Longitude    float64
 	Source       string
 	URL          string   `gorm:"uniqueIndex"`
-	Image       string 
-
+	Image        string 
+	SearchCount  uint     // for counting top searched filters
 }

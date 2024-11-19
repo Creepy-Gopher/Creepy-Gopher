@@ -26,4 +26,5 @@ type Filter struct {
 	City              string   `gorm:"uniqueIndex:idx_filterset_all"` 
 	District          string   `gorm:"uniqueIndex:idx_filterset_all"`
 	Source            string   `gorm:"uniqueIndex:idx_filterset_all"`
+	SearchCount	      uint     // for counting top searched filters
 }

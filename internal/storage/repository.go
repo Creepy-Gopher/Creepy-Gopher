@@ -24,12 +24,14 @@ type PropertyRepository interface {
 
 type FilterRepository interface {
     Repository[models.Filter]
-    // TODO: Add specific methods if needed
+    GetByFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error)
 }
 
 type UserRepository interface {
     Repository[models.User]
-    // TODO: Add specific methods if needed
+    GetByUserName(ctx context.Context, userName string) (*models.User, error)
+    GetAllUsers(ctx context.Context) ([]models.User, error)
+    DeleteAllSoftDeletedUsers(ctx context.Context) error
 }
 
 type BookmarkRepository interface {
@@ -39,7 +41,7 @@ type BookmarkRepository interface {
 
 type UserSearchHistoryRepository interface {
     Repository[models.UserSearchHistory]
-    // TODO: Add specific methods if needed
+    ListSearchHistoryByUserName(ctx context.Context, userName string) ([]*models.UserSearchHistory, error)
 }
 
 type WatchListRepository interface {
