@@ -27,4 +27,5 @@ type Property struct {
 	Source       string
 	URL          string `gorm:"uniqueIndex"`
 	Image        string
+	SearchCount  uint // for counting top searched filters
 }

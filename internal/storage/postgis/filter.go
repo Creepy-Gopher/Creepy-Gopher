@@ -59,3 +59,15 @@ func (r *filterRepo) Delete(ctx context.Context, id uuid.UUID) error {
     }
     return nil
 }
+
+func (r *filterRepo) GetByFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error) {
+    var resFilter models.Filter
+    result := r.DB.WithContext(ctx).Where(filter).First(&resFilter)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    if result.RowsAffected == 0 {
+        return nil, fmt.Errorf("no record found with filter %v", *filter)
+    }
+    return &resFilter, nil
+}
