@@ -84,6 +84,6 @@ func parseSheypoorBuy(url string, linkType LinkType, page playwright.Page) (*mod
 			}
 		}
 	}
-	//printStructFields(resultProperty)
+	printStructFields(resultProperty)
 	return &resultProperty, nil
 }
