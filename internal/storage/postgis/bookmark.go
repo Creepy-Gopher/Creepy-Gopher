@@ -34,7 +34,7 @@ func (r *bookmarkRepo) DeleteBookmard(ctx context.Context, id uuid.UUID) error {
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("no bookmark found with ID %v", id)
+		return fmt.Errorf("no bookmark found with ID: %v", id)
 	}
 	return nil
 }
@@ -47,10 +47,3 @@ func (r *bookmarkRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Bookm
 	}
 	return &bookmark, nil
 }
-
-// func (r *bookmarkRepo) Save(ctx context.Context, entity *models.Bookmark) error {
-//     	if err := r.DB.WithContext(ctx).Save(entity).Error; err != nil {
-//             return err
-//         }
-//         return nil
-// }

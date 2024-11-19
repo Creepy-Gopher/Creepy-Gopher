@@ -5,8 +5,6 @@ import (
 	"creepy/internal/models"
 	"creepy/internal/storage"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 type BookmarkService struct {
@@ -31,17 +29,7 @@ func (s *BookmarkService) CreateBookmark(ctx context.Context, bookmark *models.B
 	return s.Repo.CreateBookmark(ctx, bookmark)
 }
 
-func (s *BookmarkService) GetBookmarkList(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	// TODO: Error handling
-	// return s.Repo.GetByID(ctx, id)
-}
-
-// func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
+// func (s *BookmarkService) GetBookmarkList(ctx context.Context, id uuid.UUID) (*models.Bookmark, error) {
 // 	// TODO: Error handling
-// 	return s.Repo.Update(ctx, user)
-// }
-
-// func (s *UserService) DeleteUser(ctx context.Context, id uuid.UUID) error {
-// 	// TODO: Error handling
-// 	return s.Repo.Delete(ctx, id)
+// 	// return s.Repo.GetByID(ctx, id)
 // }
